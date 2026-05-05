@@ -212,38 +212,72 @@
 </head>
 <body>
   <header class="border-b border-zinc-200 bg-white sticky top-0 z-30">
-    <div class="mx-auto flex max-w-6xl items-center gap-3 px-3 py-2 sm:gap-6 sm:px-4 sm:py-3">
-      <button class="flex items-center gap-2" onclick="showTab('home')" aria-label="走ログ ホーム">
-        <img src="public/logo.png" alt="走ログ" class="h-7 w-auto sm:h-10" />
+    <div class="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 lg:gap-6">
+      <!-- Logo (mobile: image only / desktop: image + DEMO badge) -->
+      <button class="flex items-center gap-2 flex-shrink-0" onclick="showTab('home')" aria-label="走ログ ホーム">
+        <img src="public/logo.png" alt="走ログ" class="h-9 w-auto sm:h-10" />
         <span class="hidden sm:inline rounded bg-zinc-100 px-2 py-0.5 text-xs font-normal text-zinc-500">DEMO</span>
       </button>
+
+      <!-- Desktop nav (lg 以上で表示) -->
+      <nav class="hidden lg:flex items-center gap-5 text-sm text-zinc-600">
+        <button class="hover:text-zinc-900" onclick="showTab('home')">トップ</button>
+        <button class="hover:text-zinc-900" onclick="showTab('ranking')">ランキング</button>
+        <button class="hover:text-zinc-900" onclick="showTab('circuits')">サーキット</button>
+        <button class="auth-only hidden hover:text-zinc-900" onclick="showTab('cars')">マイガレージ</button>
+        <button class="auth-only hidden hover:text-zinc-900" onclick="showTab('post-lap')">タイム投稿</button>
+        <button class="hover:text-zinc-900" onclick="showTab('about')">走ログとは</button>
+        <button class="hover:text-zinc-900" onclick="showTab('contact')">お問い合わせ</button>
+      </nav>
+
+      <!-- Auth buttons / hamburger -->
       <div class="ml-auto flex items-center gap-2 text-sm">
         <!-- Logged out actions -->
-        <div id="auth-out" class="flex items-center gap-2">
+        <div id="auth-out" class="hidden lg:flex items-center gap-2">
           <button class="rounded border border-zinc-300 px-3 py-1 text-zinc-700 hover:bg-zinc-50" onclick="showTab('login')">ログイン</button>
           <button class="rounded bg-racing-red px-3 py-1 font-medium text-white hover:bg-red-700" onclick="showTab('signup')">新規登録</button>
         </div>
-        <!-- Logged in actions -->
-        <div id="auth-in" class="hidden items-center gap-3">
+        <!-- Logged in actions (desktop only here) -->
+        <div id="auth-in" class="hidden lg:flex items-center gap-3">
           <button class="text-zinc-600 hover:text-zinc-900" onclick="showTab('user')">@hashiro_taro</button>
           <button class="text-zinc-600 hover:text-zinc-900" onclick="showTab('account-settings')" title="アカウント設定" aria-label="アカウント設定">⚙</button>
           <button class="rounded border border-zinc-300 px-2 py-1 text-zinc-600 hover:bg-zinc-50" onclick="setAuth(false)">ログアウト</button>
         </div>
+        <!-- Hamburger (lg 未満で表示) -->
+        <button class="lg:hidden rounded-md p-2 text-zinc-700 hover:bg-zinc-100" onclick="toggleMobileMenu()" aria-label="メニューを開く" id="hamburger-btn">
+          <svg id="ham-open" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          <svg id="ham-close" class="hidden h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M6 18L18 6"/></svg>
+        </button>
       </div>
     </div>
-    <nav class="border-t border-zinc-100 bg-white">
-      <div class="mx-auto max-w-6xl px-4">
-        <div class="flex gap-5 overflow-x-auto whitespace-nowrap">
-          <button class="tab-btn active" data-tab="home">トップ</button>
-          <button class="tab-btn" data-tab="ranking">ランキング</button>
-          <button class="tab-btn" data-tab="circuits">サーキット</button>
-          <button class="tab-btn auth-only hidden" data-tab="cars">マイガレージ</button>
-          <button class="tab-btn auth-only hidden" data-tab="post-lap">タイム投稿</button>
-          <button class="tab-btn" data-tab="about">走ログとは</button>
-          <button class="tab-btn" data-tab="contact">お問い合わせ</button>
+
+    <!-- Mobile menu (hidden by default) -->
+    <div id="mobile-menu" class="hidden border-t border-zinc-200 bg-white lg:hidden">
+      <nav class="mx-auto max-w-6xl px-4 py-3 grid gap-1 text-sm">
+        <button class="rounded px-3 py-2.5 text-left text-zinc-700 hover:bg-zinc-50" onclick="showTabFromMenu('home')">🏁 トップ</button>
+        <button class="rounded px-3 py-2.5 text-left text-zinc-700 hover:bg-zinc-50" onclick="showTabFromMenu('ranking')">🏆 ランキング</button>
+        <button class="rounded px-3 py-2.5 text-left text-zinc-700 hover:bg-zinc-50" onclick="showTabFromMenu('circuits')">🛣 サーキット</button>
+        <button class="auth-only hidden rounded px-3 py-2.5 text-left text-zinc-700 hover:bg-zinc-50" onclick="showTabFromMenu('cars')">🏎 マイガレージ</button>
+        <button class="auth-only hidden rounded px-3 py-2.5 text-left text-zinc-700 hover:bg-zinc-50" onclick="showTabFromMenu('post-lap')">⏱ タイム投稿</button>
+        <button class="rounded px-3 py-2.5 text-left text-zinc-700 hover:bg-zinc-50" onclick="showTabFromMenu('about')">ℹ 走ログとは</button>
+        <button class="rounded px-3 py-2.5 text-left text-zinc-700 hover:bg-zinc-50" onclick="showTabFromMenu('contact')">✉ お問い合わせ</button>
+
+        <!-- Auth section in mobile menu -->
+        <div class="mt-2 border-t border-zinc-200 pt-2">
+          <!-- Logged out -->
+          <div id="auth-out-mobile" class="grid gap-2">
+            <button class="rounded bg-racing-red px-3 py-2.5 font-bold text-white hover:bg-red-700" onclick="showTabFromMenu('signup')">新規登録</button>
+            <button class="rounded border border-zinc-300 px-3 py-2.5 text-zinc-700 hover:bg-zinc-50" onclick="showTabFromMenu('login')">ログイン</button>
+          </div>
+          <!-- Logged in -->
+          <div id="auth-in-mobile" class="hidden grid gap-1">
+            <button class="rounded px-3 py-2.5 text-left text-zinc-700 hover:bg-zinc-50" onclick="showTabFromMenu('user')">👤 @hashiro_taro</button>
+            <button class="rounded px-3 py-2.5 text-left text-zinc-700 hover:bg-zinc-50" onclick="showTabFromMenu('account-settings')">⚙ アカウント設定</button>
+            <button class="rounded border border-zinc-300 px-3 py-2.5 text-left text-zinc-700 hover:bg-zinc-50" onclick="closeMobileMenu(); setAuth(false);">ログアウト</button>
+          </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+    </div>
   </header>
 
   <main class="mx-auto max-w-6xl px-4 py-6">
@@ -1961,13 +1995,38 @@
     let isLoggedIn = false;
 
     function applyAuthUI() {
+      // Desktop (lg:flex は常時、hidden だけトグル)
       document.getElementById('auth-out').classList.toggle('hidden', isLoggedIn);
-      document.getElementById('auth-out').classList.toggle('flex', !isLoggedIn);
       document.getElementById('auth-in').classList.toggle('hidden', !isLoggedIn);
-      document.getElementById('auth-in').classList.toggle('flex', isLoggedIn);
+      // Mobile menu
+      document.getElementById('auth-out-mobile')?.classList.toggle('hidden', isLoggedIn);
+      document.getElementById('auth-in-mobile')?.classList.toggle('hidden', !isLoggedIn);
+      // .auth-only リンク (デスクトップ・モバイル両方)
       document.querySelectorAll('.auth-only').forEach(el => {
         el.classList.toggle('hidden', !isLoggedIn);
       });
+    }
+
+    // ============================================================
+    // モバイルハンバーガーメニュー
+    // ============================================================
+    function toggleMobileMenu() {
+      const menu = document.getElementById('mobile-menu');
+      const open = document.getElementById('ham-open');
+      const close = document.getElementById('ham-close');
+      const willShow = menu.classList.contains('hidden');
+      menu.classList.toggle('hidden', !willShow);
+      open.classList.toggle('hidden', willShow);
+      close.classList.toggle('hidden', !willShow);
+    }
+    function closeMobileMenu() {
+      document.getElementById('mobile-menu')?.classList.add('hidden');
+      document.getElementById('ham-open')?.classList.remove('hidden');
+      document.getElementById('ham-close')?.classList.add('hidden');
+    }
+    function showTabFromMenu(name) {
+      closeMobileMenu();
+      showTab(name);
     }
 
     function setAuth(v) {
