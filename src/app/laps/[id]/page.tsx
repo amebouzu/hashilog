@@ -1,0 +1,195 @@
+import Link from "next/link";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { formatLapMs, TRACK_LABEL, WEATHER_LABEL } from "@/lib/types";
+import { ShareLink } from "@/components/ShareLink";
+import { ReportButton } from "@/components/ReportButton";
+
+export const dynamic = "force-dynamic";
+
+async function loadLap(id: string) {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("lap_times")
+    .select(
+      "*, profiles(username, display_name), cars(name, maker, model, year), circuits(name, slug, prefecture, sectors), tires(brand, model), lap_photos(id, storage_path, caption)"
+    )
+    .eq("id", id)
+    .maybeSingle();
+  return data;
+}
+
+export async function generateMetadata({
+  params
+}: {
+  params: { id: string };
+}): Promise<Metadata> {
+  const lap = await loadLap(params.id);
+  if (!lap) return { title: "ラップが見つかりません" };
+  const title = `${formatLapMs(lap.total_ms)} @ ${lap.circuits.name} — ${lap.cars.maker} ${lap.cars.model}`;
+  const desc = `@${lap.profiles.username} のタイム · ${lap.cars.maker} ${lap.cars.model} · ${WEATHER_LABEL[lap.weather as keyof typeof WEATHER_LABEL]} ${TRACK_LABEL[lap.track_condition as keyof typeof TRACK_LABEL]}`;
+  return {
+    title,
+    description: desc,
+    openGraph: { title, description: desc, type: "article" },
+    twitter: { card: "summary_large_image", title, description: desc }
+  };
+}
+
+export default async function LapDetailPage({
+  params
+}: {
+  params: { id: string };
+}) {
+  const supabase = createClient();
+  const lap = await loadLap(params.id);
+  if (!lap) notFound();
+
+  const photos = (lap.lap_photos ?? []).map((p: any) => {
+    const { data } = supabase.storage
+      .from("lap-photos")
+      .getPublicUrl(p.storage_path);
+    return { ...p, url: data.publicUrl };
+  });
+
+  const sectors = [
+    lap.sector1_ms,
+    lap.sector2_ms,
+    lap.sector3_ms,
+    lap.sector4_ms
+  ].filter((s): s is number => s != null);
+
+  return (
+    <article className="space-y-6">
+      <header className="rounded-lg border border-zinc-200 bg-white p-6">
+        <p className="text-xs text-zinc-500">
+          <Link
+            href={`/circuits/${lap.circuits.slug}`}
+            className="hover:text-zinc-900"
+          >
+            {lap.circuits.name}
+          </Link>{" "}
+          · {lap.driven_at}
+        </p>
+        <p className="mt-2 font-mono text-5xl font-black lap-time tabular">
+          {formatLapMs(lap.total_ms)}
+        </p>
+        <p className="mt-3 text-sm text-zinc-700">
+          <Link
+            href={`/u/${lap.profiles.username}`}
+            className="hover:underline"
+          >
+            @{lap.profiles.username}
+          </Link>{" "}
+          /{" "}
+          <Link href={`/cars/${lap.car_id}`} className="hover:underline">
+            {lap.cars.maker} {lap.cars.model} ({lap.cars.name})
+          </Link>
+        </p>
+      </header>
+
+      <section className="grid gap-4 sm:grid-cols-3">
+        <Stat
+          label="天候 / 路面"
+          value={`${WEATHER_LABEL[lap.weather as keyof typeof WEATHER_LABEL]} / ${TRACK_LABEL[lap.track_condition as keyof typeof TRACK_LABEL]}`}
+        />
+        <Stat
+          label="気温 / 路温"
+          value={`${lap.air_temp_c ?? "-"}℃ / ${lap.track_temp_c ?? "-"}℃`}
+        />
+        <Stat
+          label="最高速"
+          value={lap.top_speed_kmh ? `${lap.top_speed_kmh} km/h` : "-"}
+        />
+        <Stat
+          label="タイヤブランド"
+          value={lap.tires?.brand ?? "-"}
+        />
+        <Stat
+          label="タイヤ銘柄"
+          value={lap.tires ? lap.tires.model : "-"}
+        />
+        <Stat
+          label="タイヤサイズ (フロント)"
+          value={lap.tire_size_front ?? lap.tire_size ?? "-"}
+        />
+        <Stat
+          label="タイヤサイズ (リア)"
+          value={
+            lap.tire_size_rear ?? lap.tire_size_front ?? lap.tire_size ?? "-"
+          }
+        />
+      </section>
+
+      {sectors.length > 0 && (
+        <section>
+          <h2 className="mb-2 text-lg font-bold text-zinc-900">セクタータイム</h2>
+          <ul className="grid gap-2 sm:grid-cols-4">
+            {sectors.map((s, i) => (
+              <li
+                key={i}
+                className="rounded-lg border border-zinc-200 bg-zinc-50 p-3"
+              >
+                <p className="text-xs text-zinc-500">セクター{i + 1}</p>
+                <p className="font-mono text-lg tabular text-zinc-800">
+                  {formatLapMs(s)}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {lap.note && (
+        <section>
+          <h2 className="mb-2 text-lg font-bold text-zinc-900">メモ</h2>
+          <p className="whitespace-pre-wrap rounded-lg border border-zinc-200 bg-white p-4 text-sm text-zinc-700">
+            {lap.note}
+          </p>
+        </section>
+      )}
+
+      {photos.length > 0 && (
+        <section>
+          <h2 className="mb-2 text-lg font-bold text-zinc-900">エビデンス写真</h2>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {photos.map((p: any) => (
+              <a
+                key={p.id}
+                href={p.url}
+                target="_blank"
+                rel="noreferrer"
+                className="block overflow-hidden rounded-lg border border-zinc-200"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={p.url}
+                  alt={p.caption ?? "lap evidence"}
+                  className="h-auto w-full object-cover"
+                />
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-zinc-200 pt-4 text-sm">
+        <div className="flex gap-2">
+          <ShareLink platform="x" />
+          <ShareLink platform="line" />
+        </div>
+        <ReportButton subjectType="lap_time" subjectId={lap.id} />
+      </div>
+    </article>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+      <p className="text-xs text-zinc-500">{label}</p>
+      <p className="mt-1 text-sm text-zinc-800">{value}</p>
+    </div>
+  );
+}

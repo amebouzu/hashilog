@@ -1,0 +1,87 @@
+import type { Metadata } from "next";
+import "./globals.css";
+import { Navbar } from "@/components/Navbar";
+import { createClient } from "@/lib/supabase/server";
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+
+export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "走ログ — サーキットタイム共有",
+    template: "%s | 走ログ"
+  },
+  description:
+    "日本のサーキットで刻んだタイムを愛車情報と一緒にシェア。セクタータイム・最高速・タイヤ・天候まで。",
+  icons: { icon: "/logo.png" },
+  openGraph: {
+    type: "website",
+    siteName: "走ログ",
+    title: "走ログ — サーキットタイム共有",
+    description: "サーキットのタイムを愛車情報と一緒にシェア",
+    images: ["/logo.png"],
+    locale: "ja_JP"
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "走ログ",
+    images: ["/logo.png"]
+  }
+};
+
+export default async function RootLayout({
+  children
+}: {
+  children: React.ReactNode;
+}) {
+  const supabase = createClient();
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+
+  let username: string | null = null;
+  if (user) {
+    const { data } = await supabase
+      .from("profiles")
+      .select("username")
+      .eq("id", user.id)
+      .maybeSingle();
+    username = data?.username ?? null;
+  }
+
+  return (
+    <html lang="ja">
+      <body>
+        <Navbar signedIn={!!user} username={username} />
+        <main className="mx-auto max-w-6xl px-4 py-6">{children}</main>
+        <footer className="mt-10 border-t border-zinc-200 bg-white">
+          <div className="mx-auto max-w-6xl px-4 py-8">
+            <nav className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
+              <a href="/about" className="text-zinc-600 hover:text-zinc-900">
+                走ログとは
+              </a>
+              <a href="/contact" className="text-zinc-600 hover:text-zinc-900">
+                お問い合わせ
+              </a>
+              <a href="/terms" className="text-zinc-600 hover:text-zinc-900">
+                利用規約
+              </a>
+              <a href="/privacy" className="text-zinc-600 hover:text-zinc-900">
+                プライバシーポリシー
+              </a>
+              <a
+                href="/circuit-login"
+                className="text-zinc-600 hover:text-zinc-900"
+              >
+                サーキット運営者ログイン
+              </a>
+            </nav>
+            <p className="mt-4 text-xs text-zinc-500">
+              © 2026 走ログ · サーキットタイム共有サービス
+            </p>
+          </div>
+        </footer>
+      </body>
+    </html>
+  );
+}

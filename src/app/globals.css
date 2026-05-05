@@ -1,0 +1,118 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html, body {
+  background: #ffffff;
+  color: #18181b;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN",
+    "Hiragino Sans", "Yu Gothic UI", Meiryo, sans-serif;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.lap-time {
+  color: #e10600;
+}
+
+.hero {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(250, 250, 252, 0.95) 60%, rgba(254, 242, 242, 0.6) 100%),
+    repeating-linear-gradient(90deg, transparent 0 40px, rgba(225, 6, 0, 0.04) 40px 41px);
+  border: 1px solid #e5e7eb;
+}
+
+/* ===== Latest lap slider ===== */
+.lap-slider {
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent 0, #000 32px, #000 calc(100% - 32px), transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 32px, #000 calc(100% - 32px), transparent 100%);
+}
+.lap-slider-track {
+  display: flex;
+  gap: 12px;
+  width: max-content;
+  animation: lap-slide 28s linear infinite;
+}
+.lap-slider:hover .lap-slider-track {
+  animation-play-state: paused;
+}
+@keyframes lap-slide {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.lap-slide-card {
+  flex: 0 0 240px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.15s;
+  text-decoration: none;
+  color: inherit;
+}
+@media (min-width: 640px) {
+  .lap-slide-card { flex-basis: 280px; }
+}
+.lap-slide-card:hover {
+  border-color: #e10600;
+  transform: translateY(-2px);
+}
+
+/* ===== Circuit icons ===== */
+.circuit-icon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  width: 96px;
+  height: 96px;
+  padding: 8px 6px 10px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-decoration: none;
+  color: inherit;
+  flex: 0 0 auto;
+}
+.circuit-icon:hover {
+  border-color: #e10600;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
+}
+.circuit-icon-mark {
+  width: 56px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 6px;
+}
+.circuit-icon-mark svg {
+  width: 100%;
+  height: 100%;
+}
+.circuit-icon-name {
+  font-weight: 700;
+  font-size: 12px;
+  color: #18181b;
+  line-height: 1.2;
+  text-align: center;
+}
+.circuit-icon-pref {
+  font-size: 10px;
+  color: #71717a;
+  margin-top: 2px;
+}

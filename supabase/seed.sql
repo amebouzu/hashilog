@@ -1,0 +1,51 @@
+-- 走ログ seed data: 日本の主要サーキット & 代表的なタイヤ
+
+insert into public.circuits (slug, name, prefecture, length_m, sectors) values
+  ('fuji',         '富士スピードウェイ',           '静岡県', 4563, 3),
+  ('suzuka',       '鈴鹿サーキット',               '三重県', 5807, 3),
+  ('motegi',       'モビリティリゾートもてぎ',     '栃木県', 4801, 3),
+  ('okayama',      '岡山国際サーキット',           '岡山県', 3703, 3),
+  ('autopolis',    'オートポリス',                 '大分県', 4674, 3),
+  ('sportsland-sugo','スポーツランドSUGO',         '宮城県', 3704, 3),
+  ('tsukuba-2000', '筑波サーキット コース2000',    '茨城県', 2070, 3),
+  ('tsukuba-1000', '筑波サーキット コース1000',    '茨城県', 1039, 3),
+  ('central',      'セントラルサーキット',         '兵庫県', 2804, 3),
+  ('sportsland-yamanashi','スポーツランドやまなし','山梨県', 2410, 3),
+  ('ebisu-east',   'エビスサーキット 東コース',     '福島県', 1670, 3),
+  ('ebisu-west',   'エビスサーキット 西コース',     '福島県', 2400, 3),
+  ('nikko',        '日光サーキット',               '栃木県', 1064, 3),
+  ('honjo',        '本庄サーキット',               '埼玉県', 1010, 3),
+  ('sodegaura',        '袖ケ浦フォレストレースウェイ',     '千葉県', 2436, 3),
+  ('tokachi',          '十勝スピードウェイ',                '北海道', 5091, 3),
+  ('suzuka-twin',      '鈴鹿ツインサーキット',              '三重県', 1138, 3),
+  ('mihama',           '美浜サーキット',                     '愛知県',  826, 3),
+  ('kouta',            '幸田サーキット',                     '愛知県', 1545, 3),
+  ('mobara-west',      '茂原ツインサーキット 西コース',      '千葉県', 1750, 3),
+  ('mobara-east',      '茂原ツインサーキット 東コース',      '千葉県', 1700, 3),
+  ('spa-nishiura',     'スパ西浦モーターパーク',             '愛知県', 1591, 3),
+  ('tsukude',          '作手モビリティパーク',                '愛知県',  830, 3),
+  ('nakayama',         '中山サーキット',                     '岡山県', 1595, 3),
+  ('fuji-short',       '富士スピードウェイ ショートコース',   '静岡県', 1500, 3)
+on conflict (slug) do nothing;
+
+insert into public.tires (brand, model) values
+  ('YOKOHAMA',   'ADVAN A052'),
+  ('YOKOHAMA',   'ADVAN NEOVA AD09'),
+  ('YOKOHAMA',   'ADVAN A050'),
+  ('BRIDGESTONE','POTENZA RE-71RS'),
+  ('BRIDGESTONE','POTENZA RE-12D'),
+  ('BRIDGESTONE','POTENZA S007A'),
+  ('DUNLOP',     'DIREZZA ZIII'),
+  ('DUNLOP',     'DIREZZA β02'),
+  ('TOYO TIRES', 'PROXES R888R'),
+  ('TOYO TIRES', 'PROXES R1R'),
+  ('TOYO TIRES', 'PROXES SPORT'),
+  ('NITTO',      'NT01'),
+  ('MICHELIN',   'PILOT SPORT CUP 2'),
+  ('MICHELIN',   'PILOT SPORT 4S'),
+  ('PIRELLI',    'P ZERO TROFEO R'),
+  ('HANKOOK',    'VENTUS RS4'),
+  ('HANKOOK',    'VENTUS R-S3'),
+  ('GOODYEAR',   'EAGLE F1 SUPERCAR'),
+  ('KUMHO',      'ECSTA V730')
+on conflict (brand, model) do nothing;
