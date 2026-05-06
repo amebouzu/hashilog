@@ -15,6 +15,21 @@ type TireOpt = {
 
 const OTHER = "__other__";
 
+// 1セットのタイヤ選択状態 (前後共通 / 前 / 後 で再利用)
+type TireSelection = {
+  brand: string;
+  modelId: string;
+  customBrand: string;
+  customModel: string;
+};
+
+const EMPTY_TIRE: TireSelection = {
+  brand: "",
+  modelId: "",
+  customBrand: "",
+  customModel: ""
+};
+
 export function LapForm({
   cars,
   circuits,
@@ -33,10 +48,14 @@ export function LapForm({
   const [circuitId, setCircuitId] = useState(
     defaultCircuitId ?? circuits[0]?.id ?? ""
   );
-  const [tireBrand, setTireBrand] = useState<string>("");
-  const [tireId, setTireId] = useState<string>("");
-  const [customBrand, setCustomBrand] = useState<string>("");
-  const [customModel, setCustomModel] = useState<string>("");
+
+  // 前後で別タイヤを使うかのトグル
+  const [splitTires, setSplitTires] = useState(false);
+  // 前後共通モード時に使う「兼用」枠 (split=false の時はこれを front/rear 両方として保存)
+  const [tireCommon, setTireCommon] = useState<TireSelection>(EMPTY_TIRE);
+  const [tireFront, setTireFront] = useState<TireSelection>(EMPTY_TIRE);
+  const [tireRear, setTireRear] = useState<TireSelection>(EMPTY_TIRE);
+
   const [tireSizeFront, setTireSizeFront] = useState<string>("");
   const [tireSizeRear, setTireSizeRear] = useState<string>("");
   const [total, setTotal] = useState("");
@@ -66,10 +85,48 @@ export function LapForm({
     () => Array.from(new Set(tires.map((t) => t.brand))).sort(),
     [tires]
   );
-  const tireModelsForBrand = useMemo(
-    () => tires.filter((t) => !tireBrand || t.brand === tireBrand),
-    [tires, tireBrand]
-  );
+
+  /**
+   * フォームの 1 セットのタイヤ選択を tires.id に解決する。
+   * - 既存ドロップダウン選択 → そのまま id を返す
+   * - 「その他」手動入力 → tires に upsert して id を返す
+   * - 何も選んでなければ null
+   */
+  async function resolveTireId(
+    sel: TireSelection,
+    supabase: ReturnType<typeof createClient>,
+    userId: string
+  ): Promise<{ id: string | null; error?: string }> {
+    const isOther = sel.brand === OTHER || sel.modelId === OTHER;
+    if (isOther) {
+      const newBrand = sel.brand === OTHER ? sel.customBrand.trim() : sel.brand;
+      const newModel = sel.customModel.trim();
+      if (!newBrand || !newModel) {
+        return {
+          id: null,
+          error: "タイヤのブランドと銘柄は両方入力してください"
+        };
+      }
+      const { data: upserted, error: tireErr } = await supabase
+        .from("tires")
+        .upsert(
+          {
+            brand: newBrand,
+            model: newModel,
+            submitted_by: userId
+          },
+          { onConflict: "brand,model" }
+        )
+        .select("id")
+        .single();
+      if (tireErr || !upserted) {
+        return { id: null, error: tireErr?.message ?? "タイヤ銘柄の登録に失敗しました" };
+      }
+      return { id: upserted.id };
+    }
+    if (sel.modelId) return { id: sel.modelId };
+    return { id: null };
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -93,37 +150,33 @@ export function LapForm({
       return;
     }
 
-    // 手動入力された銘柄は tires に upsert して id を取得
-    let resolvedTireId: string | null = null;
-    if (tireBrand === OTHER || tireId === OTHER) {
-      const newBrand =
-        tireBrand === OTHER ? customBrand.trim() : tireBrand;
-      const newModel = customModel.trim();
-      if (!newBrand || !newModel) {
+    // フロント/リアそれぞれ tire_id を解決
+    let frontId: string | null = null;
+    let rearId: string | null = null;
+    if (splitTires) {
+      const f = await resolveTireId(tireFront, supabase, user.id);
+      if (f.error) {
         setSaving(false);
-        setError("ブランドと銘柄を両方入力してください");
+        setError("フロント: " + f.error);
         return;
       }
-      const { data: upserted, error: tireErr } = await supabase
-        .from("tires")
-        .upsert(
-          {
-            brand: newBrand,
-            model: newModel,
-            submitted_by: user.id
-          },
-          { onConflict: "brand,model" }
-        )
-        .select("id")
-        .single();
-      if (tireErr || !upserted) {
+      const r = await resolveTireId(tireRear, supabase, user.id);
+      if (r.error) {
         setSaving(false);
-        setError(tireErr?.message ?? "タイヤ銘柄の登録に失敗しました");
+        setError("リア: " + r.error);
         return;
       }
-      resolvedTireId = upserted.id;
-    } else if (tireId) {
-      resolvedTireId = tireId;
+      frontId = f.id;
+      rearId = r.id;
+    } else {
+      const c = await resolveTireId(tireCommon, supabase, user.id);
+      if (c.error) {
+        setSaving(false);
+        setError(c.error);
+        return;
+      }
+      frontId = c.id;
+      rearId = c.id;
     }
 
     const front = tireSizeFront.trim();
@@ -135,7 +188,10 @@ export function LapForm({
         user_id: user.id,
         car_id: carId,
         circuit_id: circuitId,
-        tire_id: resolvedTireId,
+        // 旧カラム互換: フロント側を tire_id にも保持
+        tire_id: frontId,
+        tire_id_front: frontId,
+        tire_id_rear: rearId,
         tire_size_front: front || null,
         // リア未入力時はフロントと同じものを記録 (前後同サイズ車両への配慮)
         tire_size_rear: rear || front || null,
@@ -321,59 +377,47 @@ export function LapForm({
             />
           </Field>
         </Grid>
-        <p className="pt-2 text-xs text-zinc-500">使用タイヤ</p>
+
+        <div className="pt-2">
+          <p className="text-xs text-zinc-500">使用タイヤ</p>
+          <label className="mt-1 inline-flex items-center gap-2 text-sm text-zinc-700">
+            <input
+              type="checkbox"
+              checked={splitTires}
+              onChange={(e) => setSplitTires(e.target.checked)}
+            />
+            前後で別のタイヤを使用している
+          </label>
+        </div>
+
+        {!splitTires ? (
+          <TirePicker
+            label=""
+            value={tireCommon}
+            onChange={setTireCommon}
+            tires={tires}
+            tireBrands={tireBrands}
+          />
+        ) : (
+          <div className="space-y-4">
+            <TirePicker
+              label="フロント"
+              value={tireFront}
+              onChange={setTireFront}
+              tires={tires}
+              tireBrands={tireBrands}
+            />
+            <TirePicker
+              label="リア"
+              value={tireRear}
+              onChange={setTireRear}
+              tires={tires}
+              tireBrands={tireBrands}
+            />
+          </div>
+        )}
+
         <div className="grid gap-3 sm:grid-cols-2">
-          <div>
-            <Select
-              label="ブランド"
-              value={tireBrand}
-              onChange={(v) => {
-                setTireBrand(v);
-                setTireId("");
-              }}
-              options={[
-                { value: "", label: "(未選択)" },
-                ...tireBrands.map((b) => ({ value: b, label: b })),
-                { value: OTHER, label: "その他 (手動入力)" }
-              ]}
-            />
-            {tireBrand === OTHER && (
-              <input
-                value={customBrand}
-                onChange={(e) => setCustomBrand(e.target.value)}
-                placeholder="ブランド名を入力"
-                className="input mt-2"
-              />
-            )}
-          </div>
-          <div>
-            <Select
-              label="銘柄"
-              value={tireId}
-              onChange={setTireId}
-              options={[
-                { value: "", label: "(未選択)" },
-                ...tireModelsForBrand.map((t) => ({
-                  value: t.id,
-                  label: t.model
-                })),
-                { value: OTHER, label: "その他 (手動入力)" }
-              ]}
-            />
-            {(tireId === OTHER || tireBrand === OTHER) && (
-              <input
-                value={customModel}
-                onChange={(e) => setCustomModel(e.target.value)}
-                placeholder="銘柄名を入力"
-                className="input mt-2"
-              />
-            )}
-            {(tireId === OTHER || tireBrand === OTHER) && (
-              <p className="mt-1 text-xs text-emerald-600">
-                登録後、次回からドロップダウンに自動表示されます。
-              </p>
-            )}
-          </div>
           <Field label="サイズ (フロント)">
             <input
               value={tireSizeFront}
@@ -443,6 +487,114 @@ export function LapForm({
         }
       `}</style>
     </form>
+  );
+}
+
+/**
+ * タイヤブランド × 銘柄 の 1 セット選択 UI。
+ * 「前後共通」「フロント」「リア」の各場面で再利用。
+ */
+function TirePicker({
+  label,
+  value,
+  onChange,
+  tires,
+  tireBrands
+}: {
+  label: string;
+  value: TireSelection;
+  onChange: (next: TireSelection) => void;
+  tires: TireOpt[];
+  tireBrands: string[];
+}) {
+  const tireModelsForBrand = tires.filter(
+    (t) => !value.brand || t.brand === value.brand || value.brand === OTHER
+  );
+
+  return (
+    <div className="rounded-md border border-zinc-200 p-3">
+      {label && (
+        <p className="mb-2 text-xs font-semibold text-zinc-700">{label}</p>
+      )}
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div>
+          <Field label="ブランド">
+            <select
+              value={value.brand}
+              onChange={(e) =>
+                onChange({ ...value, brand: e.target.value, modelId: "" })
+              }
+              className="input"
+            >
+              <option value="">(未選択)</option>
+              {tireBrands.map((b) => (
+                <option key={b} value={b}>
+                  {b}
+                </option>
+              ))}
+              <option value={OTHER}>その他 (手動入力)</option>
+            </select>
+          </Field>
+          {value.brand === OTHER && (
+            <input
+              value={value.customBrand}
+              onChange={(e) =>
+                onChange({ ...value, customBrand: e.target.value })
+              }
+              placeholder="ブランド名を入力"
+              className="input mt-2"
+            />
+          )}
+        </div>
+        <div>
+          <Field label="銘柄">
+            <select
+              value={value.modelId}
+              onChange={(e) => onChange({ ...value, modelId: e.target.value })}
+              className="input"
+            >
+              <option value="">(未選択)</option>
+              {tireModelsForBrand.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.model}
+                </option>
+              ))}
+              <option value={OTHER}>その他 (手動入力)</option>
+            </select>
+          </Field>
+          {(value.modelId === OTHER || value.brand === OTHER) && (
+            <>
+              <input
+                value={value.customModel}
+                onChange={(e) =>
+                  onChange({ ...value, customModel: e.target.value })
+                }
+                placeholder="銘柄名を入力"
+                className="input mt-2"
+              />
+              <p className="mt-1 text-xs text-emerald-600">
+                登録後、次回からドロップダウンに自動表示されます。
+              </p>
+            </>
+          )}
+        </div>
+      </div>
+      <style jsx>{`
+        .input {
+          width: 100%;
+          background: #ffffff;
+          border: 1px solid #d4d4d8;
+          border-radius: 6px;
+          padding: 8px 10px;
+          color: #18181b;
+        }
+        .input:focus {
+          outline: none;
+          border-color: #e10600;
+          box-shadow: 0 0 0 3px rgba(225, 6, 0, 0.1);
+        }
+      `}</style>
+    </div>
   );
 }
 

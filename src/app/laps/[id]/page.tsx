@@ -13,7 +13,14 @@ async function loadLap(id: string) {
   const { data } = await supabase
     .from("lap_times")
     .select(
-      "*, profiles(username, display_name), cars(name, maker, model, year), circuits(name, slug, prefecture, sectors), tires(brand, model), lap_photos(id, storage_path, caption)"
+      `*,
+       profiles(username, display_name),
+       cars(name, maker, model, year),
+       circuits(name, slug, prefecture, sectors),
+       tires(brand, model),
+       tires_front:tire_id_front(brand, model),
+       tires_rear:tire_id_rear(brand, model),
+       lap_photos(id, storage_path, caption)`
     )
     .eq("id", id)
     .maybeSingle();
@@ -102,24 +109,58 @@ export default async function LapDetailPage({
           label="最高速"
           value={lap.top_speed_kmh ? `${lap.top_speed_kmh} km/h` : "-"}
         />
-        <Stat
-          label="タイヤブランド"
-          value={lap.tires?.brand ?? "-"}
-        />
-        <Stat
-          label="タイヤ銘柄"
-          value={lap.tires ? lap.tires.model : "-"}
-        />
-        <Stat
-          label="タイヤサイズ (フロント)"
-          value={lap.tire_size_front ?? lap.tire_size ?? "-"}
-        />
-        <Stat
-          label="タイヤサイズ (リア)"
-          value={
-            lap.tire_size_rear ?? lap.tire_size_front ?? lap.tire_size ?? "-"
-          }
-        />
+        {(() => {
+          // 前後分離フィールドが入っていなければ legacy の lap.tires にフォールバック
+          const front = lap.tires_front ?? lap.tires ?? null;
+          const rear = lap.tires_rear ?? lap.tires ?? null;
+          const sameTire =
+            (front?.brand ?? null) === (rear?.brand ?? null) &&
+            (front?.model ?? null) === (rear?.model ?? null);
+          const sizeFront = lap.tire_size_front ?? lap.tire_size ?? null;
+          const sizeRear =
+            lap.tire_size_rear ?? lap.tire_size_front ?? lap.tire_size ?? null;
+          const sameSize = sizeFront === sizeRear;
+
+          return (
+            <>
+              {sameTire ? (
+                <>
+                  <Stat label="タイヤブランド" value={front?.brand ?? "-"} />
+                  <Stat label="タイヤ銘柄" value={front?.model ?? "-"} />
+                </>
+              ) : (
+                <>
+                  <Stat
+                    label="タイヤ (フロント)"
+                    value={
+                      front
+                        ? `${front.brand} / ${front.model}`
+                        : "-"
+                    }
+                  />
+                  <Stat
+                    label="タイヤ (リア)"
+                    value={
+                      rear
+                        ? `${rear.brand} / ${rear.model}`
+                        : "-"
+                    }
+                  />
+                </>
+              )}
+              <Stat
+                label={sameSize ? "タイヤサイズ" : "タイヤサイズ (フロント)"}
+                value={sizeFront ?? "-"}
+              />
+              {!sameSize && (
+                <Stat
+                  label="タイヤサイズ (リア)"
+                  value={sizeRear ?? "-"}
+                />
+              )}
+            </>
+          );
+        })()}
       </section>
 
       {sectors.length > 0 && (

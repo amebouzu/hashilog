@@ -15,6 +15,8 @@ export type LapRowData = {
   cars: { name?: string | null; maker: string; model: string };
   circuits?: { name: string; slug: string } | null;
   tires?: { brand: string; model: string } | null;
+  tires_front?: { brand: string; model: string } | null;
+  tires_rear?: { brand: string; model: string } | null;
 };
 
 function tireSizeInline(l: LapRowData): string {
@@ -39,8 +41,21 @@ function tireSizeStacked(l: LapRowData): { front: string; rear: string | null } 
 export function LapRow({ lap }: { lap: LapRowData }) {
   const carLabel = `${lap.cars.maker} ${lap.cars.model}`;
   const circuitLabel = lap.circuits?.name ?? null;
-  const brand = lap.tires?.brand ?? "-";
-  const model = lap.tires?.model ?? "-";
+
+  // フロント/リアタイヤを最優先、無ければ旧 tires にフォールバック
+  const frontTire = lap.tires_front ?? lap.tires ?? null;
+  const rearTire = lap.tires_rear ?? lap.tires ?? null;
+  const sameTire =
+    (frontTire?.brand ?? null) === (rearTire?.brand ?? null) &&
+    (frontTire?.model ?? null) === (rearTire?.model ?? null);
+
+  const brand = sameTire
+    ? frontTire?.brand ?? "-"
+    : `F:${frontTire?.brand ?? "-"} / R:${rearTire?.brand ?? "-"}`;
+  const model = sameTire
+    ? frontTire?.model ?? "-"
+    : `F:${frontTire?.model ?? "-"} / R:${rearTire?.model ?? "-"}`;
+
   const sizeInline = tireSizeInline(lap);
   const sizeStacked = tireSizeStacked(lap);
   const speed = lap.top_speed_kmh ? `${lap.top_speed_kmh} km/h` : "-";

@@ -34,7 +34,10 @@ export default async function RankingPage({
     supabase
       .from("lap_times")
       .select(
-        "id, total_ms, driven_at, profiles(username), cars(maker, model), circuits(name)"
+        `id, total_ms, driven_at,
+         profiles(username),
+         cars(maker, model),
+         circuits(name)`
       )
       .order("created_at", { ascending: false })
       .limit(5),
@@ -64,20 +67,37 @@ export default async function RankingPage({
   let q = supabase
     .from("lap_times")
     .select(
-      "id, total_ms, top_speed_kmh, weather, track_condition, driven_at, tire_size, tire_size_front, tire_size_rear, profiles(username), cars(name, maker, model), circuits(name, slug), tires(brand, model)"
+      `id, total_ms, top_speed_kmh, weather, track_condition, driven_at,
+       tire_size, tire_size_front, tire_size_rear,
+       profiles(username),
+       cars(name, maker, model),
+       circuits(name, slug),
+       tires(brand, model),
+       tires_front:tire_id_front(brand, model),
+       tires_rear:tire_id_rear(brand, model)`
     )
     .order("total_ms", { ascending: true })
     .limit(100);
   if (circuitId) q = q.eq("circuit_id", circuitId);
-  if (tireId) q = q.eq("tire_id", tireId);
+  // タイヤ銘柄での絞り込み: フロント or リアのどちらかが一致すればヒット
+  if (tireId)
+    q = q.or(`tire_id_front.eq.${tireId},tire_id_rear.eq.${tireId},tire_id.eq.${tireId}`);
 
   const { data: laps } = await q;
 
-  // Filter by car maker/model + tire brand on client side via the joined data
+  // Filter by car maker/model + tire brand on client side via the joined data.
+  // タイヤブランドはフロント/リアのどちらかが一致すればヒット (旧 tires も互換でチェック)
   const filtered = (laps ?? []).filter((l: any) => {
     if (searchParams.maker && l.cars?.maker !== searchParams.maker) return false;
     if (searchParams.model && l.cars?.model !== searchParams.model) return false;
-    if (searchParams.brand && l.tires?.brand !== searchParams.brand) return false;
+    if (searchParams.brand) {
+      const brands = [
+        l.tires_front?.brand,
+        l.tires_rear?.brand,
+        l.tires?.brand
+      ].filter(Boolean);
+      if (!brands.includes(searchParams.brand)) return false;
+    }
     return true;
   });
 

@@ -32,7 +32,13 @@ export default async function CircuitDetailPage({
     supabase
       .from("lap_times")
       .select(
-        "id, total_ms, top_speed_kmh, weather, track_condition, driven_at, tire_size, tire_size_front, tire_size_rear, profiles(username, display_name), cars(name, maker, model), tires(brand, model)"
+        `id, total_ms, top_speed_kmh, weather, track_condition, driven_at,
+         tire_size, tire_size_front, tire_size_rear,
+         profiles(username, display_name),
+         cars(name, maker, model),
+         tires(brand, model),
+         tires_front:tire_id_front(brand, model),
+         tires_rear:tire_id_rear(brand, model)`
       )
       .eq("circuit_id", c.id)
       .order("total_ms", { ascending: true })
