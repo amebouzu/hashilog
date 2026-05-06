@@ -65,9 +65,9 @@ export default async function MyCarsPage({
           {(cars as Car[]).map((c) => (
             <li
               key={c.id}
-              className="relative rounded-lg border border-zinc-200 bg-white p-4 transition hover:border-racing-red"
+              className="relative overflow-hidden rounded-lg border border-zinc-200 bg-white transition hover:border-racing-red"
             >
-              <div className="absolute right-2 top-2">
+              <div className="absolute right-2 top-2 z-10">
                 <ShareButtons
                   text={`🏎️ @${username} の愛車「${c.name}」(${c.maker} ${c.model}) - 走ログ`}
                   url={`/cars/${c.id}`}
@@ -75,16 +75,33 @@ export default async function MyCarsPage({
                   showCopy={false}
                 />
               </div>
-              <Link href={`/cars/${c.id}`} className="block pr-20">
-                <p className="text-xs text-zinc-500">
-                  {c.maker} {c.year ? `· ${c.year}` : ""}
-                </p>
-                <p className="text-lg font-bold text-zinc-900">{c.name}</p>
-                <p className="text-sm text-zinc-700">{c.model}</p>
-                <p className="mt-2 text-xs text-zinc-500">
-                  {c.power_ps ? `${c.power_ps}PS` : ""}{" "}
-                  {c.weight_kg ? `· ${c.weight_kg}kg` : ""}
-                </p>
+              <Link href={`/cars/${c.id}`} className="block">
+                {/* カバー画像 (登録済みなら表示、未登録は薄いプレースホルダ) */}
+                <div className="aspect-[16/9] w-full overflow-hidden bg-zinc-100">
+                  {c.cover_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={c.cover_url}
+                      alt={`${c.maker} ${c.model}`}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-xs text-zinc-400">
+                      No image
+                    </div>
+                  )}
+                </div>
+                <div className="p-4 pr-20">
+                  <p className="text-xs text-zinc-500">
+                    {c.maker} {c.year ? `· ${c.year}` : ""}
+                  </p>
+                  <p className="text-lg font-bold text-zinc-900">{c.name}</p>
+                  <p className="text-sm text-zinc-700">{c.model}</p>
+                  <p className="mt-2 text-xs text-zinc-500">
+                    {c.power_ps ? `${c.power_ps}PS` : ""}{" "}
+                    {c.weight_kg ? `· ${c.weight_kg}kg` : ""}
+                  </p>
+                </div>
               </Link>
             </li>
           ))}

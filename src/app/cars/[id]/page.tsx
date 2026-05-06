@@ -25,16 +25,31 @@ export default async function CarDetailPage({
   } = await supabase.auth.getUser();
   const isOwner = user?.id === car.user_id;
 
-  const { data: laps } = await supabase
-    .from("lap_times")
-    .select("*, circuits(name, slug)")
-    .eq("car_id", params.id)
-    .order("total_ms", { ascending: true })
-    .limit(20);
+  const [{ data: laps }, { data: photos }] = await Promise.all([
+    supabase
+      .from("lap_times")
+      .select("*, circuits(name, slug)")
+      .eq("car_id", params.id)
+      .order("total_ms", { ascending: true })
+      .limit(20),
+    supabase
+      .from("car_photos")
+      .select("id, storage_path, caption, position")
+      .eq("car_id", params.id)
+      .order("position", { ascending: true })
+  ]);
 
   const c = car as Car & {
     profiles: { username: string; display_name: string | null };
   };
+
+  // 車のギャラリー: storage_path を public URL に解決
+  const galleryUrls = (photos ?? []).map((p) => {
+    const { data } = supabase.storage
+      .from("car-covers")
+      .getPublicUrl(p.storage_path);
+    return { id: p.id, caption: p.caption, url: data.publicUrl };
+  });
 
   const mods: { label: string; value: string | null }[] = [
     { label: "足回り", value: c.mods_suspension },
@@ -47,6 +62,18 @@ export default async function CarDetailPage({
 
   return (
     <div className="space-y-6">
+      {/* カバー画像 (ヒーロー) */}
+      {c.cover_url && (
+        <div className="aspect-[16/9] w-full overflow-hidden rounded-lg border border-zinc-200 bg-zinc-100">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={c.cover_url}
+            alt={`${c.maker} ${c.model}`}
+            className="h-full w-full object-cover"
+          />
+        </div>
+      )}
+
       <header className="rounded-lg border border-zinc-200 bg-white p-6">
         <p className="text-xs text-zinc-500">
           {c.maker} {c.year ? `· ${c.year}` : ""} · オーナー{" "}
@@ -87,6 +114,34 @@ export default async function CarDetailPage({
           </div>
         )}
       </header>
+
+      {/* ギャラリー (登録された追加写真があれば表示) */}
+      {galleryUrls.length > 0 && (
+        <section>
+          <h2 className="mb-3 text-lg font-bold text-zinc-900">ギャラリー</h2>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {galleryUrls.map((p) => (
+              <a
+                key={p.id}
+                href={p.url}
+                target="_blank"
+                rel="noreferrer"
+                className="block overflow-hidden rounded-lg border border-zinc-200 bg-white"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={p.url}
+                  alt={p.caption ?? `${c.maker} ${c.model}`}
+                  className="aspect-[4/3] h-auto w-full object-cover"
+                />
+                {p.caption && (
+                  <p className="px-3 py-2 text-xs text-zinc-600">{p.caption}</p>
+                )}
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section>
         <h2 className="mb-3 text-lg font-bold text-zinc-900">チューニング</h2>
