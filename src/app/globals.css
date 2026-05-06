@@ -37,6 +37,13 @@ body {
   mask-image: linear-gradient(90deg, transparent 0, #000 32px, #000 calc(100% - 32px), transparent 100%);
   -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 32px, #000 calc(100% - 32px), transparent 100%);
 }
+/* 静止モード (件数が少ない時): 横スクロールを許可。マスクは外して右端も読みやすく */
+.lap-slider.lap-slider--static {
+  overflow-x: auto;
+  overflow-y: hidden;
+  mask-image: none;
+  -webkit-mask-image: none;
+}
 .lap-slider-track {
   display: flex;
   gap: 12px;
@@ -46,11 +53,12 @@ body {
 .lap-slider:hover .lap-slider-track {
   animation-play-state: paused;
 }
-/* 件数が少ない時はマーキー無し、横並び静止表示 */
+/* 件数が少ない時はマーキー無し、横一列の静止表示 (はみ出したら横スクロール) */
 .lap-slider-static {
   display: flex;
   gap: 12px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  width: max-content;
 }
 @keyframes lap-slide {
   from { transform: translateX(0); }

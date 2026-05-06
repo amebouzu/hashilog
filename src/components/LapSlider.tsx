@@ -32,7 +32,7 @@ export function LapSlider({ laps }: { laps: SlideLap[] }) {
           <span className="text-xs text-zinc-500">マウスを乗せると停止</span>
         )}
       </div>
-      <div className="lap-slider">
+      <div className={shouldLoop ? "lap-slider" : "lap-slider lap-slider--static"}>
         <div className={shouldLoop ? "lap-slider-track" : "lap-slider-static"}>
           {items.map((l, i) => (
             <Link
