@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { LapSlider } from "@/components/LapSlider";
 import { LapRow, LapTableHeader } from "@/components/LapRow";
+import { prefectureOrder } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -29,8 +30,7 @@ export default async function RankingPage({
     supabase
       .from("circuits")
       .select("id,slug,name,prefecture")
-      .eq("is_published", true)
-      .order("name"),
+      .eq("is_published", true),
     supabase
       .from("lap_times")
       .select(
@@ -170,7 +170,16 @@ export default async function RankingPage({
             value={searchParams.circuit ?? ""}
             options={[
               { value: "", label: "すべて" },
-              ...(circuits ?? []).map((c) => ({ value: c.slug, label: c.name }))
+              // 都道府県順 (北→南) で並べ、同県内は名前順
+              ...((circuits ?? [])
+                .slice()
+                .sort((a, b) => {
+                  const oa = prefectureOrder(a.prefecture);
+                  const ob = prefectureOrder(b.prefecture);
+                  if (oa !== ob) return oa - ob;
+                  return a.name.localeCompare(b.name, "ja");
+                })
+                .map((c) => ({ value: c.slug, label: c.name })))
             ]}
           />
           <FilterSelect

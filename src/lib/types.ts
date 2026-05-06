@@ -28,6 +28,17 @@ export const PREFECTURES = [
 
 export type Prefecture = (typeof PREFECTURES)[number];
 
+/**
+ * 都道府県名 (フリーテキスト想定) を `PREFECTURES` の並び順 (北海道 = 0、沖縄 = 46) に
+ * マップする。サーキット一覧などを「北から南」の順で並べるソートキーに使う。
+ * 不明な値は末尾 (=999) にフォールバック。
+ */
+export function prefectureOrder(pref: string | null | undefined): number {
+  if (!pref) return 999;
+  const idx = (PREFECTURES as readonly string[]).indexOf(pref);
+  return idx >= 0 ? idx : 999;
+}
+
 /** SNS のユーザー名から URL を生成 */
 export function snsUrl(
   kind: "x" | "instagram" | "threads" | "facebook" | "youtube" | "tiktok",

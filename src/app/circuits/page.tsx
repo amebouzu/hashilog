@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import type { Circuit } from "@/lib/types";
+import { prefectureOrder, type Circuit } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -18,10 +18,15 @@ export default async function CircuitsPage() {
   const supabase = createClient();
   const { data: circuits } = await supabase
     .from("circuits")
-    .select("*")
-    .order("length_m", { ascending: false });
+    .select("*");
 
-  const all = (circuits ?? []) as Circuit[];
+  // 都道府県順 (北→南) でソート、同県内は名前昇順
+  const all = ((circuits ?? []) as Circuit[]).slice().sort((a, b) => {
+    const oa = prefectureOrder(a.prefecture);
+    const ob = prefectureOrder(b.prefecture);
+    if (oa !== ob) return oa - ob;
+    return a.name.localeCompare(b.name, "ja");
+  });
   const international = all.filter((c) => INTERNATIONAL_SLUGS.has(c.slug));
   const others = all.filter((c) => !INTERNATIONAL_SLUGS.has(c.slug));
 
