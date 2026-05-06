@@ -1,10 +1,16 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Navbar } from "@/components/Navbar";
 import { OrganizationSchema } from "@/components/StructuredData";
 import { createClient } from "@/lib/supabase/server";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+
+export const viewport: Viewport = {
+  themeColor: "#e10600",
+  width: "device-width",
+  initialScale: 1
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -19,7 +25,6 @@ export const metadata: Metadata = {
     icon: "/logo.png",
     apple: "/logo.png"
   },
-  themeColor: "#e10600",
   openGraph: {
     type: "website",
     siteName: "走ログ",
