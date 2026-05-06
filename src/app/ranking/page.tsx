@@ -64,8 +64,9 @@ export default async function RankingPage({
   }
 
   // Build the ranking query with filters.
-  // 同じ tires テーブルを front/rear で複数 join する PostgREST 構文は不安定なので、
-  // ここでは旧 tire_id 経由の単一 join のみにし、前後別タイヤは下で別取得して合成する。
+  // tires への自動 join は FK が3本 (tire_id / tire_id_front / tire_id_rear) になり
+  // PostgREST が曖昧と判定するためエラー化していた。ここでは tires は join せず、
+  // 取得後に in() で一括取得して合成する。
   let q = supabase
     .from("lap_times")
     .select(
@@ -74,8 +75,7 @@ export default async function RankingPage({
        tire_id, tire_id_front, tire_id_rear,
        profiles(username),
        cars(name, maker, model),
-       circuits(name, slug),
-       tires(brand, model)`
+       circuits(name, slug)`
     )
     .order("total_ms", { ascending: true })
     .limit(100);
@@ -86,32 +86,27 @@ export default async function RankingPage({
 
   const { data: laps } = await q;
 
-  // 前後別タイヤの参照先を一括取得 (旧 tires(...) で取得済みでない id だけまとめて in() 検索)
+  // 関連タイヤを一括取得して各ラップに合成
   const lapList = (laps ?? []) as any[];
-  const knownTireById: Record<string, { brand: string; model: string }> = {};
-  for (const l of lapList) {
-    if (l.tire_id && l.tires) knownTireById[l.tire_id] = l.tires;
-  }
-  const missingIds = Array.from(
+  const tireIdsAll = Array.from(
     new Set(
       lapList
-        .flatMap((l) => [l.tire_id_front, l.tire_id_rear])
-        .filter(
-          (x): x is string => !!x && !(x in knownTireById)
-        )
+        .flatMap((l) => [l.tire_id, l.tire_id_front, l.tire_id_rear])
+        .filter((x): x is string => !!x)
     )
   );
-  if (missingIds.length > 0) {
+  const knownTireById: Record<string, { brand: string; model: string }> = {};
+  if (tireIdsAll.length > 0) {
     const { data: extra } = await supabase
       .from("tires")
       .select("id, brand, model")
-      .in("id", missingIds);
+      .in("id", tireIdsAll);
     for (const t of extra ?? []) {
       knownTireById[t.id] = { brand: t.brand, model: t.model };
     }
   }
-  // 各ラップに tires_front / tires_rear を合成
   for (const l of lapList) {
+    l.tires = l.tire_id ? knownTireById[l.tire_id] ?? null : null;
     l.tires_front = l.tire_id_front ? knownTireById[l.tire_id_front] ?? null : null;
     l.tires_rear = l.tire_id_rear ? knownTireById[l.tire_id_rear] ?? null : null;
   }

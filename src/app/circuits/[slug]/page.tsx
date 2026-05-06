@@ -29,8 +29,8 @@ export default async function CircuitDetailPage({
   const detail = getCircuitDetail(c.slug);
 
   const [{ data: laps }, { data: events }, { data: { user } }] = await Promise.all([
-    // 同じ tires テーブルへの複数 FK 経由 join は PostgREST のエイリアス解決が
-    // 不安定 → ここでは単一 join のみにし、前後別タイヤは下で別取得して合成
+    // tires への自動 join は FK が3本になってから PostgREST が曖昧として
+    // 解決失敗するので、ここでは join せず後追いで一括取得して合成する。
     supabase
       .from("lap_times")
       .select(
@@ -38,8 +38,7 @@ export default async function CircuitDetailPage({
          tire_size, tire_size_front, tire_size_rear,
          tire_id, tire_id_front, tire_id_rear,
          profiles(username, display_name),
-         cars(name, maker, model),
-         tires(brand, model)`
+         cars(name, maker, model)`
       )
       .eq("circuit_id", c.id)
       .order("total_ms", { ascending: true })
@@ -66,29 +65,27 @@ export default async function CircuitDetailPage({
     isStaff = !!staffRow;
   }
 
-  // 前後別タイヤ情報を一括解決して各ラップに合成
+  // 全タイヤ情報を一括取得して各ラップに合成 (tires は join せず後追い解決)
   const lapList = (laps ?? []) as any[];
-  const knownTireById: Record<string, { brand: string; model: string }> = {};
-  for (const l of lapList) {
-    if (l.tire_id && l.tires) knownTireById[l.tire_id] = l.tires;
-  }
-  const missingTireIds = Array.from(
+  const tireIdsAll = Array.from(
     new Set(
       lapList
-        .flatMap((l) => [l.tire_id_front, l.tire_id_rear])
-        .filter((x): x is string => !!x && !(x in knownTireById))
+        .flatMap((l) => [l.tire_id, l.tire_id_front, l.tire_id_rear])
+        .filter((x): x is string => !!x)
     )
   );
-  if (missingTireIds.length > 0) {
+  const knownTireById: Record<string, { brand: string; model: string }> = {};
+  if (tireIdsAll.length > 0) {
     const { data: extraTires } = await supabase
       .from("tires")
       .select("id, brand, model")
-      .in("id", missingTireIds);
+      .in("id", tireIdsAll);
     for (const t of extraTires ?? []) {
       knownTireById[t.id] = { brand: t.brand, model: t.model };
     }
   }
   for (const l of lapList) {
+    l.tires = l.tire_id ? knownTireById[l.tire_id] ?? null : null;
     l.tires_front = l.tire_id_front ? knownTireById[l.tire_id_front] ?? null : null;
     l.tires_rear = l.tire_id_rear ? knownTireById[l.tire_id_rear] ?? null : null;
   }

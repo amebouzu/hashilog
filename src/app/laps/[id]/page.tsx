@@ -12,9 +12,9 @@ export const dynamic = "force-dynamic";
 
 async function loadLap(id: string) {
   const supabase = createClient();
-  // ベースクエリ: 同じ tires テーブルを front/rear で複数回 join する PostgREST
-  // 構文はエイリアス解決に失敗することがあるため、ここでは旧 tires(...) のみを join し、
-  // 前後別タイヤが必要なケースは下で個別に取得して合成する。
+  // tires の自動 join は (lap_times → tires) の FK が tire_id / tire_id_front /
+  // tire_id_rear の3本になってから PostgREST が解決できなくなったので、
+  // ここでは tires は一切 join せず、後追いで .in("id", ...) で一括取得する。
   const { data: lap, error } = await supabase
     .from("lap_times")
     .select(
@@ -22,7 +22,6 @@ async function loadLap(id: string) {
        profiles(username, display_name),
        cars(name, maker, model, year),
        circuits(name, slug, prefecture, sectors),
-       tires(brand, model),
        lap_photos(id, storage_path, caption)`
     )
     .eq("id", id)
@@ -34,25 +33,20 @@ async function loadLap(id: string) {
   }
   if (!lap) return null;
 
-  // 前後別タイヤが入っていれば追加で 2 件まとめ取り
-  const extraIds = Array.from(
+  // 関連タイヤをまとめ取り
+  const tireIds = Array.from(
     new Set(
-      [lap.tire_id_front, lap.tire_id_rear]
-        .filter(
-          (x): x is string =>
-            !!x && x !== lap.tire_id // 旧 tires(...) で既に取れているので除外
-        )
+      [lap.tire_id, lap.tire_id_front, lap.tire_id_rear].filter(
+        (x): x is string => !!x
+      )
     )
   );
-  let tiresMap: Record<string, { brand: string; model: string }> = {};
-  if (lap.tires && lap.tire_id) {
-    tiresMap[lap.tire_id] = lap.tires;
-  }
-  if (extraIds.length > 0) {
+  const tiresMap: Record<string, { brand: string; model: string }> = {};
+  if (tireIds.length > 0) {
     const { data: extra } = await supabase
       .from("tires")
       .select("id, brand, model")
-      .in("id", extraIds);
+      .in("id", tireIds);
     for (const t of extra ?? []) {
       tiresMap[t.id] = { brand: t.brand, model: t.model };
     }
@@ -60,6 +54,7 @@ async function loadLap(id: string) {
 
   return {
     ...lap,
+    tires: lap.tire_id ? tiresMap[lap.tire_id] ?? null : null,
     tires_front: lap.tire_id_front ? tiresMap[lap.tire_id_front] ?? null : null,
     tires_rear: lap.tire_id_rear ? tiresMap[lap.tire_id_rear] ?? null : null
   };
