@@ -47,5 +47,11 @@ insert into public.tires (brand, model) values
   ('HANKOOK',    'VENTUS RS4'),
   ('HANKOOK',    'VENTUS R-S3'),
   ('GOODYEAR',   'EAGLE F1 SUPERCAR'),
-  ('KUMHO',      'ECSTA V730')
+  ('KUMHO',      'ECSTA V730'),
+  ('SHIBATIRE',  'TW280'),
+  ('SHIBATIRE',  'TW200'),
+  ('SHIBATIRE',  'R23'),
+  ('SHIBATIRE',  'R29'),
+  ('SHIBATIRE',  'TR-1'),
+  ('SHIBATIRE',  'TR-2')
 on conflict (brand, model) do nothing;
