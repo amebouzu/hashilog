@@ -12,6 +12,7 @@ type SP = {
   model?: string;
   brand?: string;
   tire?: string;
+  user?: string;
 };
 
 export default async function RankingPage({
@@ -63,6 +64,23 @@ export default async function RankingPage({
     tireId = t?.id;
   }
 
+  // Resolve user search → user_ids
+  // username or display_name の部分一致 (大文字小文字無視) で profile を検索し、
+  // ヒットしたユーザーの id 一覧でラップを絞り込む。
+  // 0 件マッチした場合は「該当なし」を出すために空配列を保持。
+  let userIds: string[] | null = null;
+  const userQuery = (searchParams.user ?? "").trim();
+  if (userQuery) {
+    // Postgres LIKE 用にメタ文字 ( % _ ) をエスケープ
+    const pattern = `%${userQuery.replace(/[%_]/g, (m) => `\\${m}`)}%`;
+    const { data: matched } = await supabase
+      .from("profiles")
+      .select("id")
+      .or(`username.ilike.${pattern},display_name.ilike.${pattern}`)
+      .limit(200);
+    userIds = (matched ?? []).map((m) => m.id);
+  }
+
   // Build the ranking query with filters.
   // tires への自動 join は FK が3本 (tire_id / tire_id_front / tire_id_rear) になり
   // PostgREST が曖昧と判定するためエラー化していた。ここでは tires は join せず、
@@ -83,6 +101,15 @@ export default async function RankingPage({
   // タイヤ銘柄での絞り込み: フロント or リアのどちらかが一致すればヒット
   if (tireId)
     q = q.or(`tire_id_front.eq.${tireId},tire_id_rear.eq.${tireId},tire_id.eq.${tireId}`);
+  // ユーザー検索: 該当ユーザーがいる時はその user_id 配列で絞り込み。
+  // 検索文字列はあるが 0 ヒットの場合は明示的に「結果ゼロ」になるよう詰む。
+  if (userIds !== null) {
+    if (userIds.length === 0) {
+      q = q.eq("user_id", "00000000-0000-0000-0000-000000000000");
+    } else {
+      q = q.in("user_id", userIds);
+    }
+  }
 
   const { data: laps } = await q;
 
@@ -162,8 +189,31 @@ export default async function RankingPage({
         </div>
         <form
           method="get"
-          className="grid grid-cols-1 gap-3 rounded-lg border border-zinc-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-5"
+          className="rounded-lg border border-zinc-200 bg-white p-4"
         >
+          {/* ユーザー検索 (フリーテキスト) */}
+          <label className="block">
+            <span className="mb-1 block text-xs text-zinc-500">
+              ユーザー検索 (ユーザー名 / 表示名 部分一致)
+            </span>
+            <input
+              type="text"
+              name="user"
+              defaultValue={searchParams.user ?? ""}
+              placeholder="例: subaru, 山田"
+              className="w-full rounded border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-racing-red focus:outline-none focus:ring-2 focus:ring-red-100"
+            />
+          </label>
+          {userQuery && userIds && (
+            <p className="mt-1 text-xs text-zinc-500">
+              {userIds.length === 0
+                ? `「${userQuery}」に一致するユーザーは見つかりませんでした`
+                : `「${userQuery}」 にマッチした ${userIds.length} 名のラップを表示`}
+            </p>
+          )}
+
+          {/* 既存の絞り込みドロップダウン群 */}
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <FilterSelect
             name="circuit"
             label="サーキット"
@@ -218,7 +268,9 @@ export default async function RankingPage({
               ...tireModels.map((m) => ({ value: m, label: m }))
             ]}
           />
-          <div className="flex gap-2 sm:col-span-2 lg:col-span-5">
+          </div>
+
+          <div className="mt-4 flex gap-2">
             <button
               type="submit"
               className="rounded bg-racing-red px-4 py-1.5 text-sm font-bold text-white hover:bg-red-700"
