@@ -85,20 +85,6 @@ function LoginForm() {
           新規登録
         </Link>
       </p>
-      <div className="mt-6 rounded-lg border border-zinc-200 bg-zinc-50 p-4">
-        <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-          サーキット運営者の方へ
-        </p>
-        <p className="mt-1 text-sm text-zinc-700">
-          公式アカウントとして自施設のページを編集できます。
-        </p>
-        <Link
-          href="/circuit-login"
-          className="mt-2 inline-block text-sm font-bold text-amber-700 hover:underline"
-        >
-          サーキット運営者ログイン →
-        </Link>
-      </div>
     </div>
   );
 }
