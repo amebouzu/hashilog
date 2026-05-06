@@ -18,6 +18,7 @@ from reportlab.lib.units import mm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.cidfonts import UnicodeCIDFont
 from reportlab.platypus import (
+    Image,
     PageBreak,
     Paragraph,
     SimpleDocTemplate,
@@ -26,6 +27,10 @@ from reportlab.platypus import (
     TableStyle,
 )
 from reportlab.lib import colors
+
+
+# Logo path (resolves on platypus image loading)
+LOGO_PATH = Path(__file__).resolve().parents[1] / "public" / "logo.png"
 
 
 # ---------------------------------------------------------------------------
@@ -156,7 +161,15 @@ def build_story():
     story = []
 
     # ===== Cover =====
-    story.append(Spacer(1, 60 * mm))
+    story.append(Spacer(1, 30 * mm))
+    if LOGO_PATH.exists():
+        # logo.png aspect 1181:625; render at 70mm wide centered
+        logo_w = 70 * mm
+        logo_h = logo_w * (625 / 1181)
+        logo = Image(str(LOGO_PATH), width=logo_w, height=logo_h)
+        logo.hAlign = "CENTER"
+        story.append(logo)
+        story.append(Spacer(1, 14 * mm))
     story.append(p("走ログ (Hashilog) 事業提案書", title_style))
     story.append(
         p(
@@ -164,7 +177,7 @@ def build_story():
             subtitle_style,
         )
     )
-    story.append(Spacer(1, 60 * mm))
+    story.append(Spacer(1, 40 * mm))
     story.append(
         jp_table(
             [
@@ -674,6 +687,18 @@ def build_story():
 # ---------------------------------------------------------------------------
 def on_page(canvas, doc):
     canvas.saveState()
+    # 1ページ目以外は右上に小さいロゴを置く (カバーは大きく中央なので除外)
+    if doc.page > 1 and LOGO_PATH.exists():
+        logo_w = 22 * mm
+        logo_h = logo_w * (625 / 1181)
+        canvas.drawImage(
+            str(LOGO_PATH),
+            A4[0] - 20 * mm - logo_w,
+            A4[1] - 14 * mm - logo_h,
+            width=logo_w,
+            height=logo_h,
+            mask="auto",
+        )
     canvas.setFont(JP_SANS, 8)
     canvas.setFillColor(colors.HexColor("#71717a"))
     canvas.drawString(
