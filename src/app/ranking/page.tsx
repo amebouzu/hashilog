@@ -200,7 +200,7 @@ export default async function RankingPage({
               type="text"
               name="user"
               defaultValue={searchParams.user ?? ""}
-              placeholder="例: subaru, 山田"
+              placeholder="例: 山田, tanaka"
               className="w-full rounded border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-racing-red focus:outline-none focus:ring-2 focus:ring-red-100"
             />
           </label>
