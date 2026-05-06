@@ -65,7 +65,7 @@ export default async function MyCarsPage({
           {(cars as Car[]).map((c) => (
             <li
               key={c.id}
-              className="relative rounded-lg border border-zinc-200 bg-white p-4 transition hover:border-racing-red"
+              className="relative overflow-hidden rounded-lg border border-zinc-200 bg-white transition hover:border-racing-red"
             >
               <div className="absolute right-2 top-2 z-10">
                 <ShareButtons
@@ -75,23 +75,9 @@ export default async function MyCarsPage({
                   showCopy={false}
                 />
               </div>
-              <Link href={`/cars/${c.id}`} className="flex gap-3 pr-16">
-                {/* 左: テキスト情報 */}
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs text-zinc-500">
-                    {c.maker} {c.year ? `· ${c.year}` : ""}
-                  </p>
-                  <p className="truncate text-lg font-bold text-zinc-900">
-                    {c.name}
-                  </p>
-                  <p className="truncate text-sm text-zinc-700">{c.model}</p>
-                  <p className="mt-2 text-xs text-zinc-500">
-                    {c.power_ps ? `${c.power_ps}PS` : ""}{" "}
-                    {c.weight_kg ? `· ${c.weight_kg}kg` : ""}
-                  </p>
-                </div>
-                {/* 右: カバー画像 (正方形サムネ。未登録時はプレースホルダ) */}
-                <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border border-zinc-200 bg-zinc-100">
+              <Link href={`/cars/${c.id}`} className="flex">
+                {/* 左: 4:3 のカバー画像 (車は横長なので正方形より自然に収まる) */}
+                <div className="aspect-[4/3] w-32 flex-shrink-0 overflow-hidden bg-zinc-100 sm:w-36">
                   {c.cover_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -104,6 +90,20 @@ export default async function MyCarsPage({
                       No image
                     </div>
                   )}
+                </div>
+                {/* 右: テキスト情報 (シェアボタン分の余白を確保) */}
+                <div className="min-w-0 flex-1 p-3 pr-12">
+                  <p className="text-xs text-zinc-500">
+                    {c.maker} {c.year ? `· ${c.year}` : ""}
+                  </p>
+                  <p className="truncate text-base font-bold text-zinc-900">
+                    {c.name}
+                  </p>
+                  <p className="truncate text-sm text-zinc-700">{c.model}</p>
+                  <p className="mt-1.5 text-xs text-zinc-500">
+                    {c.power_ps ? `${c.power_ps}PS` : ""}{" "}
+                    {c.weight_kg ? `· ${c.weight_kg}kg` : ""}
+                  </p>
                 </div>
               </Link>
             </li>

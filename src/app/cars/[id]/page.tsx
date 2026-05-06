@@ -62,10 +62,21 @@ export default async function CarDetailPage({
 
   return (
     <div className="space-y-6">
-      <header className="rounded-lg border border-zinc-200 bg-white p-6">
-        <div className="flex gap-4 sm:gap-6">
-          {/* 左: 車両名・スペック等 */}
-          <div className="min-w-0 flex-1">
+      <header className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
+        <div className="flex flex-col gap-0 sm:flex-row sm:gap-6">
+          {/* 左: 4:3 カバー画像 (車は横長なので 4:3 がフィット。スマホは上、PCは左) */}
+          {c.cover_url && (
+            <div className="aspect-[4/3] w-full flex-shrink-0 overflow-hidden bg-zinc-100 sm:w-72 sm:rounded-l-lg lg:w-80">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={c.cover_url}
+                alt={`${c.maker} ${c.model}`}
+                className="h-full w-full object-cover"
+              />
+            </div>
+          )}
+          {/* 右: 車両名・スペック・メモ・削除ボタン */}
+          <div className="min-w-0 flex-1 p-6">
             <p className="text-xs text-zinc-500">
               {c.maker} {c.year ? `· ${c.year}` : ""} · オーナー{" "}
               <Link
@@ -105,17 +116,6 @@ export default async function CarDetailPage({
               </div>
             )}
           </div>
-          {/* 右: カバー画像 (登録時のみ表示。スマホでも横並びで小さく) */}
-          {c.cover_url && (
-            <div className="h-28 w-28 flex-shrink-0 overflow-hidden rounded-lg border border-zinc-200 bg-zinc-100 sm:h-40 sm:w-40">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={c.cover_url}
-                alt={`${c.maker} ${c.model}`}
-                className="h-full w-full object-cover"
-              />
-            </div>
-          )}
         </div>
       </header>
 
