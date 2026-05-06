@@ -62,57 +62,61 @@ export default async function CarDetailPage({
 
   return (
     <div className="space-y-6">
-      {/* カバー画像 (ヒーロー) */}
-      {c.cover_url && (
-        <div className="aspect-[16/9] w-full overflow-hidden rounded-lg border border-zinc-200 bg-zinc-100">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={c.cover_url}
-            alt={`${c.maker} ${c.model}`}
-            className="h-full w-full object-cover"
-          />
-        </div>
-      )}
-
       <header className="rounded-lg border border-zinc-200 bg-white p-6">
-        <p className="text-xs text-zinc-500">
-          {c.maker} {c.year ? `· ${c.year}` : ""} · オーナー{" "}
-          <Link
-            href={`/u/${c.profiles.username}`}
-            className="underline hover:text-zinc-900"
-          >
-            @{c.profiles.username}
-          </Link>
-        </p>
-        <h1 className="mt-1 text-3xl font-bold text-zinc-900">{c.name}</h1>
-        <p className="text-zinc-700">{c.model}</p>
-        <div className="mt-3 flex gap-4 text-sm text-zinc-500">
-          {c.power_ps && <span>{c.power_ps} PS</span>}
-          {c.weight_kg && <span>{c.weight_kg} kg</span>}
-          {c.color && <span>{c.color}</span>}
-        </div>
-        {c.description && (
-          <p className="mt-4 whitespace-pre-wrap text-sm text-zinc-700">
-            {c.description}
-          </p>
-        )}
-        {isOwner && (
-          <div className="mt-4 flex gap-2">
-            <form
-              action={async () => {
-                "use server";
-                await deleteCarAction(c.id);
-              }}
-            >
-              <button
-                type="submit"
-                className="rounded border border-zinc-300 px-3 py-1 text-xs text-zinc-600 hover:text-red-600 hover:border-red-300"
+        <div className="flex gap-4 sm:gap-6">
+          {/* 左: 車両名・スペック等 */}
+          <div className="min-w-0 flex-1">
+            <p className="text-xs text-zinc-500">
+              {c.maker} {c.year ? `· ${c.year}` : ""} · オーナー{" "}
+              <Link
+                href={`/u/${c.profiles.username}`}
+                className="underline hover:text-zinc-900"
               >
-                削除
-              </button>
-            </form>
+                @{c.profiles.username}
+              </Link>
+            </p>
+            <h1 className="mt-1 text-3xl font-bold text-zinc-900">{c.name}</h1>
+            <p className="text-zinc-700">{c.model}</p>
+            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-zinc-500">
+              {c.power_ps && <span>{c.power_ps} PS</span>}
+              {c.weight_kg && <span>{c.weight_kg} kg</span>}
+              {c.color && <span>{c.color}</span>}
+            </div>
+            {c.description && (
+              <p className="mt-4 whitespace-pre-wrap text-sm text-zinc-700">
+                {c.description}
+              </p>
+            )}
+            {isOwner && (
+              <div className="mt-4 flex gap-2">
+                <form
+                  action={async () => {
+                    "use server";
+                    await deleteCarAction(c.id);
+                  }}
+                >
+                  <button
+                    type="submit"
+                    className="rounded border border-zinc-300 px-3 py-1 text-xs text-zinc-600 hover:text-red-600 hover:border-red-300"
+                  >
+                    削除
+                  </button>
+                </form>
+              </div>
+            )}
           </div>
-        )}
+          {/* 右: カバー画像 (登録時のみ表示。スマホでも横並びで小さく) */}
+          {c.cover_url && (
+            <div className="h-28 w-28 flex-shrink-0 overflow-hidden rounded-lg border border-zinc-200 bg-zinc-100 sm:h-40 sm:w-40">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={c.cover_url}
+                alt={`${c.maker} ${c.model}`}
+                className="h-full w-full object-cover"
+              />
+            </div>
+          )}
+        </div>
       </header>
 
       {/* ギャラリー (登録された追加写真があれば表示) */}

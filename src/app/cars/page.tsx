@@ -65,7 +65,7 @@ export default async function MyCarsPage({
           {(cars as Car[]).map((c) => (
             <li
               key={c.id}
-              className="relative overflow-hidden rounded-lg border border-zinc-200 bg-white transition hover:border-racing-red"
+              className="relative rounded-lg border border-zinc-200 bg-white p-4 transition hover:border-racing-red"
             >
               <div className="absolute right-2 top-2 z-10">
                 <ShareButtons
@@ -75,9 +75,23 @@ export default async function MyCarsPage({
                   showCopy={false}
                 />
               </div>
-              <Link href={`/cars/${c.id}`} className="block">
-                {/* カバー画像 (登録済みなら表示、未登録は薄いプレースホルダ) */}
-                <div className="aspect-[16/9] w-full overflow-hidden bg-zinc-100">
+              <Link href={`/cars/${c.id}`} className="flex gap-3 pr-16">
+                {/* 左: テキスト情報 */}
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-zinc-500">
+                    {c.maker} {c.year ? `· ${c.year}` : ""}
+                  </p>
+                  <p className="truncate text-lg font-bold text-zinc-900">
+                    {c.name}
+                  </p>
+                  <p className="truncate text-sm text-zinc-700">{c.model}</p>
+                  <p className="mt-2 text-xs text-zinc-500">
+                    {c.power_ps ? `${c.power_ps}PS` : ""}{" "}
+                    {c.weight_kg ? `· ${c.weight_kg}kg` : ""}
+                  </p>
+                </div>
+                {/* 右: カバー画像 (正方形サムネ。未登録時はプレースホルダ) */}
+                <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border border-zinc-200 bg-zinc-100">
                   {c.cover_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -86,21 +100,10 @@ export default async function MyCarsPage({
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-xs text-zinc-400">
+                    <div className="flex h-full w-full items-center justify-center text-[10px] text-zinc-400">
                       No image
                     </div>
                   )}
-                </div>
-                <div className="p-4 pr-20">
-                  <p className="text-xs text-zinc-500">
-                    {c.maker} {c.year ? `· ${c.year}` : ""}
-                  </p>
-                  <p className="text-lg font-bold text-zinc-900">{c.name}</p>
-                  <p className="text-sm text-zinc-700">{c.model}</p>
-                  <p className="mt-2 text-xs text-zinc-500">
-                    {c.power_ps ? `${c.power_ps}PS` : ""}{" "}
-                    {c.weight_kg ? `· ${c.weight_kg}kg` : ""}
-                  </p>
                 </div>
               </Link>
             </li>
