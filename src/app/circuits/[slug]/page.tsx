@@ -29,16 +29,17 @@ export default async function CircuitDetailPage({
   const detail = getCircuitDetail(c.slug);
 
   const [{ data: laps }, { data: events }, { data: { user } }] = await Promise.all([
+    // 同じ tires テーブルへの複数 FK 経由 join は PostgREST のエイリアス解決が
+    // 不安定 → ここでは単一 join のみにし、前後別タイヤは下で別取得して合成
     supabase
       .from("lap_times")
       .select(
         `id, total_ms, top_speed_kmh, weather, track_condition, driven_at,
          tire_size, tire_size_front, tire_size_rear,
+         tire_id, tire_id_front, tire_id_rear,
          profiles(username, display_name),
          cars(name, maker, model),
-         tires(brand, model),
-         tires_front:tire_id_front(brand, model),
-         tires_rear:tire_id_rear(brand, model)`
+         tires(brand, model)`
       )
       .eq("circuit_id", c.id)
       .order("total_ms", { ascending: true })
@@ -65,8 +66,35 @@ export default async function CircuitDetailPage({
     isStaff = !!staffRow;
   }
 
-  const lapCount = laps?.length ?? 0;
-  const fastestLap = laps && laps.length > 0 ? laps[0] : null;
+  // 前後別タイヤ情報を一括解決して各ラップに合成
+  const lapList = (laps ?? []) as any[];
+  const knownTireById: Record<string, { brand: string; model: string }> = {};
+  for (const l of lapList) {
+    if (l.tire_id && l.tires) knownTireById[l.tire_id] = l.tires;
+  }
+  const missingTireIds = Array.from(
+    new Set(
+      lapList
+        .flatMap((l) => [l.tire_id_front, l.tire_id_rear])
+        .filter((x): x is string => !!x && !(x in knownTireById))
+    )
+  );
+  if (missingTireIds.length > 0) {
+    const { data: extraTires } = await supabase
+      .from("tires")
+      .select("id, brand, model")
+      .in("id", missingTireIds);
+    for (const t of extraTires ?? []) {
+      knownTireById[t.id] = { brand: t.brand, model: t.model };
+    }
+  }
+  for (const l of lapList) {
+    l.tires_front = l.tire_id_front ? knownTireById[l.tire_id_front] ?? null : null;
+    l.tires_rear = l.tire_id_rear ? knownTireById[l.tire_id_rear] ?? null : null;
+  }
+
+  const lapCount = lapList.length;
+  const fastestLap = lapList.length > 0 ? lapList[0] : null;
   const upcomingEvents = (events ?? []) as CircuitEvent[];
 
   return (
@@ -266,11 +294,11 @@ export default async function CircuitDetailPage({
           </Link>
         </div>
 
-        {laps && laps.length > 0 ? (
+        {lapList.length > 0 ? (
           <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
             <LapTableHeader />
             <ol className="divide-y divide-zinc-200">
-              {(laps as any[]).map((l, i) => (
+              {lapList.map((l, i) => (
                 <LapRow
                   key={l.id}
                   lap={{ ...l, circuits: null, rank: i + 1 }}

@@ -12,42 +12,57 @@ export const dynamic = "force-dynamic";
 
 async function loadLap(id: string) {
   const supabase = createClient();
-  // 新カラム (tire_id_front/rear) を含む完全クエリ。
-  // migration 010 未適用環境ではこれがエラーになるので、その場合は旧カラムだけで再試行する。
-  const fullSelect = `*,
-       profiles(username, display_name),
-       cars(name, maker, model, year),
-       circuits(name, slug, prefecture, sectors),
-       tires(brand, model),
-       tires_front:tire_id_front(brand, model),
-       tires_rear:tire_id_rear(brand, model),
-       lap_photos(id, storage_path, caption)`;
-  const legacySelect = `*,
-       profiles(username, display_name),
-       cars(name, maker, model, year),
-       circuits(name, slug, prefecture, sectors),
-       tires(brand, model),
-       lap_photos(id, storage_path, caption)`;
-
-  const { data, error } = await supabase
+  // ベースクエリ: 同じ tires テーブルを front/rear で複数回 join する PostgREST
+  // 構文はエイリアス解決に失敗することがあるため、ここでは旧 tires(...) のみを join し、
+  // 前後別タイヤが必要なケースは下で個別に取得して合成する。
+  const { data: lap, error } = await supabase
     .from("lap_times")
-    .select(fullSelect)
+    .select(
+      `*,
+       profiles(username, display_name),
+       cars(name, maker, model, year),
+       circuits(name, slug, prefecture, sectors),
+       tires(brand, model),
+       lap_photos(id, storage_path, caption)`
+    )
     .eq("id", id)
     .maybeSingle();
 
   if (error) {
-    console.warn("loadLap full select failed, falling back:", error.message);
-    const fallback = await supabase
-      .from("lap_times")
-      .select(legacySelect)
-      .eq("id", id)
-      .maybeSingle();
-    if (fallback.error) {
-      console.error("loadLap legacy select also failed:", fallback.error.message);
-    }
-    return fallback.data;
+    console.error("loadLap failed:", error.message);
+    return null;
   }
-  return data;
+  if (!lap) return null;
+
+  // 前後別タイヤが入っていれば追加で 2 件まとめ取り
+  const extraIds = Array.from(
+    new Set(
+      [lap.tire_id_front, lap.tire_id_rear]
+        .filter(
+          (x): x is string =>
+            !!x && x !== lap.tire_id // 旧 tires(...) で既に取れているので除外
+        )
+    )
+  );
+  let tiresMap: Record<string, { brand: string; model: string }> = {};
+  if (lap.tires && lap.tire_id) {
+    tiresMap[lap.tire_id] = lap.tires;
+  }
+  if (extraIds.length > 0) {
+    const { data: extra } = await supabase
+      .from("tires")
+      .select("id, brand, model")
+      .in("id", extraIds);
+    for (const t of extra ?? []) {
+      tiresMap[t.id] = { brand: t.brand, model: t.model };
+    }
+  }
+
+  return {
+    ...lap,
+    tires_front: lap.tire_id_front ? tiresMap[lap.tire_id_front] ?? null : null,
+    tires_rear: lap.tire_id_rear ? tiresMap[lap.tire_id_rear] ?? null : null
+  };
 }
 
 export async function generateMetadata({

@@ -63,18 +63,19 @@ export default async function RankingPage({
     tireId = t?.id;
   }
 
-  // Build the ranking query with filters
+  // Build the ranking query with filters.
+  // 同じ tires テーブルを front/rear で複数 join する PostgREST 構文は不安定なので、
+  // ここでは旧 tire_id 経由の単一 join のみにし、前後別タイヤは下で別取得して合成する。
   let q = supabase
     .from("lap_times")
     .select(
       `id, total_ms, top_speed_kmh, weather, track_condition, driven_at,
        tire_size, tire_size_front, tire_size_rear,
+       tire_id, tire_id_front, tire_id_rear,
        profiles(username),
        cars(name, maker, model),
        circuits(name, slug),
-       tires(brand, model),
-       tires_front:tire_id_front(brand, model),
-       tires_rear:tire_id_rear(brand, model)`
+       tires(brand, model)`
     )
     .order("total_ms", { ascending: true })
     .limit(100);
@@ -85,9 +86,39 @@ export default async function RankingPage({
 
   const { data: laps } = await q;
 
+  // 前後別タイヤの参照先を一括取得 (旧 tires(...) で取得済みでない id だけまとめて in() 検索)
+  const lapList = (laps ?? []) as any[];
+  const knownTireById: Record<string, { brand: string; model: string }> = {};
+  for (const l of lapList) {
+    if (l.tire_id && l.tires) knownTireById[l.tire_id] = l.tires;
+  }
+  const missingIds = Array.from(
+    new Set(
+      lapList
+        .flatMap((l) => [l.tire_id_front, l.tire_id_rear])
+        .filter(
+          (x): x is string => !!x && !(x in knownTireById)
+        )
+    )
+  );
+  if (missingIds.length > 0) {
+    const { data: extra } = await supabase
+      .from("tires")
+      .select("id, brand, model")
+      .in("id", missingIds);
+    for (const t of extra ?? []) {
+      knownTireById[t.id] = { brand: t.brand, model: t.model };
+    }
+  }
+  // 各ラップに tires_front / tires_rear を合成
+  for (const l of lapList) {
+    l.tires_front = l.tire_id_front ? knownTireById[l.tire_id_front] ?? null : null;
+    l.tires_rear = l.tire_id_rear ? knownTireById[l.tire_id_rear] ?? null : null;
+  }
+
   // Filter by car maker/model + tire brand on client side via the joined data.
   // タイヤブランドはフロント/リアのどちらかが一致すればヒット (旧 tires も互換でチェック)
-  const filtered = (laps ?? []).filter((l: any) => {
+  const filtered = lapList.filter((l: any) => {
     if (searchParams.maker && l.cars?.maker !== searchParams.maker) return false;
     if (searchParams.model && l.cars?.model !== searchParams.model) return false;
     if (searchParams.brand) {
