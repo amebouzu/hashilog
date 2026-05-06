@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Navbar } from "@/components/Navbar";
+import { OrganizationSchema } from "@/components/StructuredData";
 import { createClient } from "@/lib/supabase/server";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
@@ -13,7 +14,12 @@ export const metadata: Metadata = {
   },
   description:
     "日本のサーキットで刻んだタイムを愛車情報と一緒にシェア。セクタータイム・最高速・タイヤ・天候まで。",
-  icons: { icon: "/logo.png" },
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png"
+  },
+  themeColor: "#e10600",
   openGraph: {
     type: "website",
     siteName: "走ログ",
@@ -49,9 +55,12 @@ export default async function RootLayout({
     username = data?.username ?? null;
   }
 
+  const cfBeacon = process.env.NEXT_PUBLIC_CLOUDFLARE_BEACON_TOKEN;
+
   return (
     <html lang="ja">
       <body>
+        <OrganizationSchema />
         <Navbar signedIn={!!user} username={username} />
         <main className="mx-auto max-w-6xl px-4 py-6">{children}</main>
         <footer className="mt-10 border-t border-zinc-200 bg-white">
@@ -70,6 +79,12 @@ export default async function RootLayout({
                 プライバシーポリシー
               </a>
               <a
+                href="/legal/tokushoho"
+                className="text-zinc-600 hover:text-zinc-900"
+              >
+                特商法表記
+              </a>
+              <a
                 href="/circuit-login"
                 className="text-zinc-600 hover:text-zinc-900"
               >
@@ -81,6 +96,14 @@ export default async function RootLayout({
             </p>
           </div>
         </footer>
+        {cfBeacon && (
+          // eslint-disable-next-line @next/next/no-sync-scripts
+          <script
+            defer
+            src="https://static.cloudflareinsights.com/beacon.min.js"
+            data-cf-beacon={`{"token": "${cfBeacon}"}`}
+          />
+        )}
       </body>
     </html>
   );

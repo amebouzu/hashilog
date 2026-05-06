@@ -13,19 +13,18 @@ export default function TokushohoPage() {
       effectiveDate="2026年5月1日"
     >
       <p className="rounded border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
-        ※ 以下は走ログ Premium / Pro プラン (有料サブスクリプション) に関する表記です。<br />
-        ※ 個人事業主として運営する場合、住所・電話番号は請求があったときに遅滞なく提供する形でも認められます。下記の <em>「請求があった場合に開示」</em> 部分は実運営時に確定情報に置き換えてください。
+        ※ 以下は走ログ Premium / Pro プラン (有料サブスクリプション) に関する表記です。
       </p>
 
       <table>
         <tbody>
           <tr>
             <th style={{ width: "30%" }}>販売事業者</th>
-            <td>走ログ運営事務局 (記載準備中)</td>
+            <td>RBS</td>
           </tr>
           <tr>
             <th>運営責任者</th>
-            <td>(運営責任者名)</td>
+            <td>久米田 昴</td>
           </tr>
           <tr>
             <th>所在地</th>
@@ -37,11 +36,11 @@ export default function TokushohoPage() {
           </tr>
           <tr>
             <th>メールアドレス</th>
-            <td>support@hashirolog.example</td>
+            <td>hashilog2024@gmail.com</td>
           </tr>
           <tr>
             <th>ウェブサイト</th>
-            <td>https://hashirolog.example</td>
+            <td>https://hashilog.jp</td>
           </tr>
           <tr>
             <th>販売価格</th>

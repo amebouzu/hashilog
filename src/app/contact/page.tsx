@@ -163,37 +163,22 @@ export default async function ContactPage({
 
       <div className="rounded-lg border border-zinc-200 bg-white p-6">
         <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-zinc-500">
-          その他の連絡先
+          直接のご連絡
         </h2>
-        <div className="space-y-2 text-sm text-zinc-700">
-          <p>
-            <strong>サーキット提携:</strong>{" "}
-            <a
-              className="text-racing-red hover:underline"
-              href="mailto:partners@hashirolog.example"
-            >
-              partners@hashirolog.example
-            </a>
-          </p>
-          <p>
-            <strong>取材・メディア:</strong>{" "}
-            <a
-              className="text-racing-red hover:underline"
-              href="mailto:press@hashirolog.example"
-            >
-              press@hashirolog.example
-            </a>
-          </p>
-          <p>
-            <strong>セキュリティ報告:</strong>{" "}
-            <a
-              className="text-racing-red hover:underline"
-              href="mailto:security@hashirolog.example"
-            >
-              security@hashirolog.example
-            </a>
-          </p>
-        </div>
+        <p className="text-sm text-zinc-700">
+          サーキット提携・取材・メディア・セキュリティ報告などのご連絡は下記までお願いします。
+        </p>
+        <p className="mt-2 text-sm">
+          <a
+            className="font-bold text-racing-red hover:underline"
+            href="mailto:hashilog2024@gmail.com"
+          >
+            hashilog2024@gmail.com
+          </a>
+        </p>
+        <p className="mt-2 text-xs text-zinc-500">
+          通常 2〜3 営業日以内に返信いたします。
+        </p>
       </div>
 
       <p className="text-xs text-zinc-500">

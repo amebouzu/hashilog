@@ -111,10 +111,10 @@ function CircuitLoginForm() {
       <p className="mt-4 text-xs text-zinc-500">
         ※ 運営者アカウントは走ログ運営との提携締結後に発行されます。提携については{" "}
         <a
-          href="mailto:partners@hashirolog.example"
+          href="mailto:hashilog2024@gmail.com"
           className="text-racing-red hover:underline"
         >
-          partners@hashirolog.example
+          hashilog2024@gmail.com
         </a>{" "}
         までお問い合わせください。
       </p>

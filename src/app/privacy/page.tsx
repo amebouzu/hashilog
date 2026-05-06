@@ -104,7 +104,7 @@ export default function PrivacyPage() {
       <p>個人情報の取扱いに関するお問い合わせは、本サービスの<a className="text-racing-red hover:underline" href="/contact">お問い合わせフォーム</a>または下記までご連絡ください。</p>
       <p>
         走ログ運営事務局<br />
-        privacy@hashirolog.example
+        hashilog2024@gmail.com
       </p>
 
       <p className="mt-8 text-xs text-zinc-500">以上</p>

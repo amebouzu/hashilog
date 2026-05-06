@@ -1,0 +1,17 @@
+{
+  "name": "走ログ — サーキットタイム共有",
+  "short_name": "走ログ",
+  "description": "サーキットのラップタイムを愛車情報と一緒に記録・共有",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#e10600",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
