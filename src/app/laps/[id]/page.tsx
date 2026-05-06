@@ -12,20 +12,41 @@ export const dynamic = "force-dynamic";
 
 async function loadLap(id: string) {
   const supabase = createClient();
-  const { data } = await supabase
-    .from("lap_times")
-    .select(
-      `*,
+  // 新カラム (tire_id_front/rear) を含む完全クエリ。
+  // migration 010 未適用環境ではこれがエラーになるので、その場合は旧カラムだけで再試行する。
+  const fullSelect = `*,
        profiles(username, display_name),
        cars(name, maker, model, year),
        circuits(name, slug, prefecture, sectors),
        tires(brand, model),
        tires_front:tire_id_front(brand, model),
        tires_rear:tire_id_rear(brand, model),
-       lap_photos(id, storage_path, caption)`
-    )
+       lap_photos(id, storage_path, caption)`;
+  const legacySelect = `*,
+       profiles(username, display_name),
+       cars(name, maker, model, year),
+       circuits(name, slug, prefecture, sectors),
+       tires(brand, model),
+       lap_photos(id, storage_path, caption)`;
+
+  const { data, error } = await supabase
+    .from("lap_times")
+    .select(fullSelect)
     .eq("id", id)
     .maybeSingle();
+
+  if (error) {
+    console.warn("loadLap full select failed, falling back:", error.message);
+    const fallback = await supabase
+      .from("lap_times")
+      .select(legacySelect)
+      .eq("id", id)
+      .maybeSingle();
+    if (fallback.error) {
+      console.error("loadLap legacy select also failed:", fallback.error.message);
+    }
+    return fallback.data;
+  }
   return data;
 }
 
