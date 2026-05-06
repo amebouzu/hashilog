@@ -11,13 +11,55 @@ export type LapRowData = {
   tire_size?: string | null;          // 旧フィールド (互換)
   tire_size_front?: string | null;
   tire_size_rear?: string | null;
-  profiles: { username: string };
+  profiles: {
+    username: string;
+    avatar_url?: string | null;
+    display_name?: string | null;
+  };
   cars: { name?: string | null; maker: string; model: string };
   circuits?: { name: string; slug: string } | null;
   tires?: { brand: string; model: string } | null;
   tires_front?: { brand: string; model: string } | null;
   tires_rear?: { brand: string; model: string } | null;
 };
+
+/**
+ * 行内に置く小さな円形アバター。avatar_url が無ければ username の先頭1文字を
+ * グレー丸に表示するフォールバック。
+ */
+function InlineAvatar({
+  url,
+  username,
+  size = 18
+}: {
+  url?: string | null;
+  username: string;
+  size?: number;
+}) {
+  if (url) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={url}
+        alt={`@${username}`}
+        width={size}
+        height={size}
+        className="inline-block flex-shrink-0 rounded-full object-cover align-middle"
+        style={{ width: size, height: size }}
+      />
+    );
+  }
+  const fallback = username.slice(0, 1).toUpperCase();
+  return (
+    <span
+      aria-hidden
+      className="inline-flex flex-shrink-0 items-center justify-center rounded-full bg-zinc-200 align-middle text-[10px] font-semibold text-zinc-600"
+      style={{ width: size, height: size }}
+    >
+      {fallback}
+    </span>
+  );
+}
 
 function tireSizeInline(l: LapRowData): string {
   const front = l.tire_size_front ?? l.tire_size ?? null;
@@ -91,8 +133,19 @@ export function LapRow({ lap }: { lap: LapRowData }) {
           ) : null}
           {carLabel}
         </p>
-        <p className="text-xs text-zinc-500">
-          @{lap.profiles.username} · {lap.track_condition} · {lap.driven_at}
+        <p className="mt-1 flex items-center gap-1.5 text-xs text-zinc-500">
+          <Link
+            href={`/u/${lap.profiles.username}`}
+            className="flex items-center gap-1 hover:text-zinc-800"
+          >
+            <InlineAvatar
+              url={lap.profiles.avatar_url}
+              username={lap.profiles.username}
+              size={18}
+            />
+            <span>@{lap.profiles.username}</span>
+          </Link>
+          <span>· {lap.track_condition} · {lap.driven_at}</span>
         </p>
         <p className="mt-1 text-xs">
           <span className="font-semibold text-zinc-700">{brand}</span>
@@ -127,8 +180,19 @@ export function LapRow({ lap }: { lap: LapRowData }) {
             )}
             {carLabel}
           </p>
-          <p className="text-xs text-zinc-500">
-            @{lap.profiles.username} · {lap.track_condition} · {lap.driven_at}
+          <p className="mt-0.5 flex items-center gap-1.5 text-xs text-zinc-500">
+            <Link
+              href={`/u/${lap.profiles.username}`}
+              className="flex items-center gap-1 hover:text-zinc-800"
+            >
+              <InlineAvatar
+                url={lap.profiles.avatar_url}
+                username={lap.profiles.username}
+                size={18}
+              />
+              <span>@{lap.profiles.username}</span>
+            </Link>
+            <span>· {lap.track_condition} · {lap.driven_at}</span>
           </p>
         </div>
         <span className="text-xs font-semibold text-zinc-700">{brand}</span>

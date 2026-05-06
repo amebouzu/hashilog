@@ -91,7 +91,7 @@ export default async function RankingPage({
       `id, total_ms, top_speed_kmh, weather, track_condition, driven_at,
        tire_size, tire_size_front, tire_size_rear,
        tire_id, tire_id_front, tire_id_rear,
-       profiles(username),
+       profiles(username, display_name, avatar_url),
        cars(name, maker, model),
        circuits(name, slug)`
     )
