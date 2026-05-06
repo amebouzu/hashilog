@@ -46,6 +46,12 @@ body {
 .lap-slider:hover .lap-slider-track {
   animation-play-state: paused;
 }
+/* 件数が少ない時はマーキー無し、横並び静止表示 */
+.lap-slider-static {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
 @keyframes lap-slide {
   from { transform: translateX(0); }
   to   { transform: translateX(-50%); }

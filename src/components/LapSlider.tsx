@@ -10,10 +10,16 @@ type SlideLap = {
   circuits: { name: string };
 };
 
+// マーキー（無限ループスクロール）に必要な最小件数
+// これ未満は複製せず静止表示にする (重複表示防止)
+const MARQUEE_MIN = 5;
+
 export function LapSlider({ laps }: { laps: SlideLap[] }) {
   if (!laps || laps.length === 0) return null;
-  // duplicate for seamless loop
-  const items = [...laps, ...laps];
+
+  const shouldLoop = laps.length >= MARQUEE_MIN;
+  // ループ表示する時だけ seamless loop 用に複製
+  const items = shouldLoop ? [...laps, ...laps] : laps;
 
   return (
     <section>
@@ -22,18 +28,18 @@ export function LapSlider({ laps }: { laps: SlideLap[] }) {
           <span className="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-racing-red align-middle" />
           最新のタイム投稿
         </h2>
-        <span className="text-xs text-zinc-500">
-          マウスを乗せると停止
-        </span>
+        {shouldLoop && (
+          <span className="text-xs text-zinc-500">マウスを乗せると停止</span>
+        )}
       </div>
       <div className="lap-slider">
-        <div className="lap-slider-track">
+        <div className={shouldLoop ? "lap-slider-track" : "lap-slider-static"}>
           {items.map((l, i) => (
             <Link
               key={`${l.id}-${i}`}
               href={`/laps/${l.id}`}
               className="lap-slide-card"
-              aria-hidden={i >= laps.length || undefined}
+              aria-hidden={shouldLoop && i >= laps.length ? true : undefined}
             >
               <p className="text-xs text-zinc-500">
                 {l.circuits.name} · {l.driven_at}
