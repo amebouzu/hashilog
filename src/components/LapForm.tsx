@@ -30,48 +30,114 @@ const EMPTY_TIRE: TireSelection = {
   customModel: ""
 };
 
+/**
+ * 編集モード用に渡す既存ラップの値。
+ * すべて指定時はフォームを既存値で初期化し、submit で UPDATE する。
+ * lapId がある = 編集モード、無い = 新規投稿モード。
+ */
+export type LapFormDefaults = {
+  lapId?: string;
+  carId?: string;
+  circuitId?: string;
+  total?: string;          // "1:23.456" 形式
+  s1?: string;
+  s2?: string;
+  s3?: string;
+  s4?: string;
+  topSpeed?: string;
+  weather?: string;
+  trackCondition?: string;
+  airTemp?: string;
+  trackTemp?: string;
+  drivenAt?: string;       // "YYYY-MM-DD"
+  note?: string;
+  tireSizeFront?: string;
+  tireSizeRear?: string;
+  // 前後共通か別かは prefill 時に front/rear が一致してるかで自動判定
+  tireFrontId?: string | null;
+  tireRearId?: string | null;
+};
+
 export function LapForm({
   cars,
   circuits,
   tires,
   defaultCarId,
-  defaultCircuitId
+  defaultCircuitId,
+  defaults
 }: {
   cars: CarOpt[];
   circuits: CircuitOpt[];
   tires: TireOpt[];
   defaultCarId?: string;
   defaultCircuitId?: string;
+  defaults?: LapFormDefaults;
 }) {
   const router = useRouter();
-  const [carId, setCarId] = useState(defaultCarId ?? cars[0]?.id ?? "");
+  const isEditing = !!defaults?.lapId;
+
+  const [carId, setCarId] = useState(
+    defaults?.carId ?? defaultCarId ?? cars[0]?.id ?? ""
+  );
   const [circuitId, setCircuitId] = useState(
-    defaultCircuitId ?? circuits[0]?.id ?? ""
+    defaults?.circuitId ?? defaultCircuitId ?? circuits[0]?.id ?? ""
   );
 
-  // 前後で別タイヤを使うかのトグル
-  const [splitTires, setSplitTires] = useState(false);
+  // 前後で別タイヤを使うかのトグル (編集モードでは front!=rear なら true で初期化)
+  const [splitTires, setSplitTires] = useState(
+    !!(
+      defaults?.tireFrontId &&
+      defaults?.tireRearId &&
+      defaults.tireFrontId !== defaults.tireRearId
+    )
+  );
+
+  // 既存ラップから TireSelection を復元するヘルパー
+  const buildTireSel = (tireId: string | null | undefined): TireSelection => {
+    if (!tireId) return EMPTY_TIRE;
+    const t = tires.find((x) => x.id === tireId);
+    if (!t) return EMPTY_TIRE;
+    return {
+      brand: t.brand,
+      modelId: t.id,
+      customBrand: "",
+      customModel: ""
+    };
+  };
+
   // 前後共通モード時に使う「兼用」枠 (split=false の時はこれを front/rear 両方として保存)
-  const [tireCommon, setTireCommon] = useState<TireSelection>(EMPTY_TIRE);
-  const [tireFront, setTireFront] = useState<TireSelection>(EMPTY_TIRE);
-  const [tireRear, setTireRear] = useState<TireSelection>(EMPTY_TIRE);
-
-  const [tireSizeFront, setTireSizeFront] = useState<string>("");
-  const [tireSizeRear, setTireSizeRear] = useState<string>("");
-  const [total, setTotal] = useState("");
-  const [s1, setS1] = useState("");
-  const [s2, setS2] = useState("");
-  const [s3, setS3] = useState("");
-  const [s4, setS4] = useState("");
-  const [topSpeed, setTopSpeed] = useState("");
-  const [weather, setWeather] = useState("sunny");
-  const [trackCond, setTrackCond] = useState("dry");
-  const [airTemp, setAirTemp] = useState("");
-  const [trackTemp, setTrackTemp] = useState("");
-  const [drivenAt, setDrivenAt] = useState(
-    new Date().toISOString().slice(0, 10)
+  const [tireCommon, setTireCommon] = useState<TireSelection>(
+    defaults?.tireFrontId === defaults?.tireRearId
+      ? buildTireSel(defaults?.tireFrontId)
+      : EMPTY_TIRE
   );
-  const [note, setNote] = useState("");
+  const [tireFront, setTireFront] = useState<TireSelection>(
+    buildTireSel(defaults?.tireFrontId)
+  );
+  const [tireRear, setTireRear] = useState<TireSelection>(
+    buildTireSel(defaults?.tireRearId)
+  );
+
+  const [tireSizeFront, setTireSizeFront] = useState<string>(
+    defaults?.tireSizeFront ?? ""
+  );
+  const [tireSizeRear, setTireSizeRear] = useState<string>(
+    defaults?.tireSizeRear ?? ""
+  );
+  const [total, setTotal] = useState(defaults?.total ?? "");
+  const [s1, setS1] = useState(defaults?.s1 ?? "");
+  const [s2, setS2] = useState(defaults?.s2 ?? "");
+  const [s3, setS3] = useState(defaults?.s3 ?? "");
+  const [s4, setS4] = useState(defaults?.s4 ?? "");
+  const [topSpeed, setTopSpeed] = useState(defaults?.topSpeed ?? "");
+  const [weather, setWeather] = useState(defaults?.weather ?? "sunny");
+  const [trackCond, setTrackCond] = useState(defaults?.trackCondition ?? "dry");
+  const [airTemp, setAirTemp] = useState(defaults?.airTemp ?? "");
+  const [trackTemp, setTrackTemp] = useState(defaults?.trackTemp ?? "");
+  const [drivenAt, setDrivenAt] = useState(
+    defaults?.drivenAt ?? new Date().toISOString().slice(0, 10)
+  );
+  const [note, setNote] = useState(defaults?.note ?? "");
   const [photos, setPhotos] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -182,46 +248,66 @@ export function LapForm({
     const front = tireSizeFront.trim();
     const rear = tireSizeRear.trim();
 
-    const { data: lap, error: insertErr } = await supabase
-      .from("lap_times")
-      .insert({
-        user_id: user.id,
-        car_id: carId,
-        circuit_id: circuitId,
-        // 旧カラム互換: フロント側を tire_id にも保持
-        tire_id: frontId,
-        tire_id_front: frontId,
-        tire_id_rear: rearId,
-        tire_size_front: front || null,
-        // リア未入力時はフロントと同じものを記録 (前後同サイズ車両への配慮)
-        tire_size_rear: rear || front || null,
-        // 旧カラム互換 (一覧表示等で fallback されている場合のため)
-        tire_size: front || null,
-        total_ms: totalMs,
-        sector1_ms: sectorMs[0],
-        sector2_ms: sectorMs[1],
-        sector3_ms: sectorMs[2],
-        sector4_ms: sectorMs[3],
-        top_speed_kmh: topSpeed ? parseInt(topSpeed, 10) : null,
-        weather,
-        track_condition: trackCond,
-        air_temp_c: airTemp ? parseFloat(airTemp) : null,
-        track_temp_c: trackTemp ? parseFloat(trackTemp) : null,
-        driven_at: drivenAt,
-        note: note || null
-      })
-      .select("id")
-      .single();
+    // INSERT / UPDATE 共通の payload (user_id は新規時のみ含める)
+    const payload = {
+      car_id: carId,
+      circuit_id: circuitId,
+      // 旧カラム互換: フロント側を tire_id にも保持
+      tire_id: frontId,
+      tire_id_front: frontId,
+      tire_id_rear: rearId,
+      tire_size_front: front || null,
+      // リア未入力時はフロントと同じものを記録 (前後同サイズ車両への配慮)
+      tire_size_rear: rear || front || null,
+      // 旧カラム互換 (一覧表示等で fallback されている場合のため)
+      tire_size: front || null,
+      total_ms: totalMs,
+      sector1_ms: sectorMs[0],
+      sector2_ms: sectorMs[1],
+      sector3_ms: sectorMs[2],
+      sector4_ms: sectorMs[3],
+      top_speed_kmh: topSpeed ? parseInt(topSpeed, 10) : null,
+      weather,
+      track_condition: trackCond,
+      air_temp_c: airTemp ? parseFloat(airTemp) : null,
+      track_temp_c: trackTemp ? parseFloat(trackTemp) : null,
+      driven_at: drivenAt,
+      note: note || null
+    };
 
-    if (insertErr || !lap) {
-      setSaving(false);
-      setError(insertErr?.message ?? "登録に失敗しました");
-      return;
+    let lapId: string;
+    if (isEditing && defaults?.lapId) {
+      const { data: lap, error: updErr } = await supabase
+        .from("lap_times")
+        .update(payload)
+        .eq("id", defaults.lapId)
+        .eq("user_id", user.id)
+        .select("id")
+        .single();
+      if (updErr || !lap) {
+        setSaving(false);
+        setError(updErr?.message ?? "更新に失敗しました");
+        return;
+      }
+      lapId = lap.id;
+    } else {
+      const { data: lap, error: insertErr } = await supabase
+        .from("lap_times")
+        .insert({ ...payload, user_id: user.id })
+        .select("id")
+        .single();
+      if (insertErr || !lap) {
+        setSaving(false);
+        setError(insertErr?.message ?? "登録に失敗しました");
+        return;
+      }
+      lapId = lap.id;
     }
 
+    // 写真は常に「追加アップロード」扱い (編集時も既存写真は残し、新規ファイルだけ足す)
     for (const file of photos) {
       const ext = file.name.split(".").pop() ?? "jpg";
-      const path = `${user.id}/${lap.id}/${crypto.randomUUID()}.${ext}`;
+      const path = `${user.id}/${lapId}/${crypto.randomUUID()}.${ext}`;
       const up = await supabase.storage
         .from("lap-photos")
         .upload(path, file, { upsert: false });
@@ -230,13 +316,13 @@ export function LapForm({
         continue;
       }
       await supabase.from("lap_photos").insert({
-        lap_time_id: lap.id,
+        lap_time_id: lapId,
         storage_path: path
       });
     }
 
     setSaving(false);
-    router.push(`/laps/${lap.id}`);
+    router.push(`/laps/${lapId}`);
     router.refresh();
   }
 
@@ -438,8 +524,12 @@ export function LapForm({
       </Section>
 
       <Section
-        title="エビデンス写真"
-        hint="計測器・タイミングモニター・車載動画など。複数枚OK。"
+        title={isEditing ? "エビデンス写真 (追加)" : "エビデンス写真"}
+        hint={
+          isEditing
+            ? "ここで選んだ写真は既存の写真に追加されます (既存写真は残ります)。"
+            : "計測器・タイミングモニター・車載動画など。複数枚OK。"
+        }
       >
         <input
           type="file"
@@ -469,7 +559,13 @@ export function LapForm({
         disabled={saving}
         className="rounded bg-racing-red px-5 py-2 font-bold text-white hover:bg-red-700 disabled:opacity-50"
       >
-        {saving ? "投稿中…" : "投稿する"}
+        {saving
+          ? isEditing
+            ? "更新中…"
+            : "投稿中…"
+          : isEditing
+          ? "更新する"
+          : "投稿する"}
       </button>
       <style jsx>{`
         .input {

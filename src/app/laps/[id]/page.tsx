@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { formatLapMs, TRACK_LABEL, WEATHER_LABEL } from "@/lib/types";
 import { ShareLink } from "@/components/ShareLink";
 import { ReportButton } from "@/components/ReportButton";
+import { DeleteLapButton } from "@/components/DeleteLapButton";
+import { deleteLapAction } from "@/app/actions/laps";
 
 export const dynamic = "force-dynamic";
 
@@ -52,6 +54,11 @@ export default async function LapDetailPage({
   const supabase = createClient();
   const lap = await loadLap(params.id);
   if (!lap) notFound();
+
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+  const isOwner = user?.id === lap.user_id;
 
   const photos = (lap.lap_photos ?? []).map((p: any) => {
     const { data } = supabase.storage
@@ -220,7 +227,25 @@ export default async function LapDetailPage({
           <ShareLink platform="x" />
           <ShareLink platform="line" />
         </div>
-        <ReportButton subjectType="lap_time" subjectId={lap.id} />
+        <div className="flex flex-wrap items-center gap-2">
+          {isOwner && (
+            <>
+              <Link
+                href={`/laps/${lap.id}/edit`}
+                className="rounded border border-zinc-300 px-3 py-1 text-zinc-700 hover:bg-zinc-50"
+              >
+                編集
+              </Link>
+              <DeleteLapButton
+                action={async () => {
+                  "use server";
+                  await deleteLapAction(lap.id);
+                }}
+              />
+            </>
+          )}
+          <ReportButton subjectType="lap_time" subjectId={lap.id} />
+        </div>
       </div>
     </article>
   );

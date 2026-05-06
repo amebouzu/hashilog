@@ -129,26 +129,29 @@ export default async function CarDetailPage({
               return (
                 <li
                   key={l.id}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-zinc-200 bg-white px-4 py-2"
+                  className="rounded-lg border border-zinc-200 bg-white transition hover:border-racing-red"
                 >
-                  <Link
-                    href={`/circuits/${l.circuits.slug}`}
-                    className="flex-1 text-sm text-zinc-800 hover:text-zinc-900"
-                  >
-                    {l.circuits.name}
-                  </Link>
+                  {/* 行全体をタイム詳細へのリンクにする (旧: サーキットページに飛んでしまっていた) */}
                   <Link
                     href={lapUrl}
-                    className="font-mono text-lg font-bold lap-time tabular hover:underline"
+                    className="flex items-center justify-between gap-3 px-4 py-2"
                   >
-                    {formatLapMs(l.total_ms)}
+                    <span className="flex-1 text-sm text-zinc-800">
+                      {l.circuits.name}
+                    </span>
+                    <span className="font-mono text-lg font-bold lap-time tabular">
+                      {formatLapMs(l.total_ms)}
+                    </span>
                   </Link>
-                  <ShareButtons
-                    text={lapText}
-                    url={lapUrl}
-                    size="sm"
-                    showCopy={false}
-                  />
+                  {/* シェアボタンはリンク外に逃がしてクリックがバブリングしないようにする */}
+                  <div className="border-t border-zinc-100 px-4 py-1.5">
+                    <ShareButtons
+                      text={lapText}
+                      url={lapUrl}
+                      size="sm"
+                      showCopy={false}
+                    />
+                  </div>
                 </li>
               );
             })}
