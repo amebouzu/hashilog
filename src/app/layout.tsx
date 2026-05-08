@@ -30,13 +30,21 @@ export const metadata: Metadata = {
     siteName: "走ログ",
     title: "走ログ — サーキットタイム共有",
     description: "サーキットのタイムを愛車情報と一緒にシェア",
-    images: ["/logo.png"],
+    images: [
+      {
+        url: "/og.png",
+        width: 1200,
+        height: 630,
+        alt: "走ログ — サーキットタイム共有"
+      }
+    ],
     locale: "ja_JP"
   },
   twitter: {
     card: "summary_large_image",
     title: "走ログ",
-    images: ["/logo.png"]
+    description: "サーキットのタイムを愛車情報と一緒にシェア",
+    images: ["/og.png"]
   },
   verification: {
     // Google Search Console 所有権確認用 (HTML タグ方式)
