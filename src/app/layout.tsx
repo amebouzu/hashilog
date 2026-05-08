@@ -73,9 +73,23 @@ export default async function RootLayout({
   }
 
   const cfBeacon = process.env.NEXT_PUBLIC_CLOUDFLARE_BEACON_TOKEN;
+  const adsenseClient = process.env.NEXT_PUBLIC_ADSENSE_CLIENT;
 
   return (
     <html lang="ja">
+      <head>
+        {/* Google AdSense 審査用スクリプト
+           NEXT_PUBLIC_ADSENSE_CLIENT (例: ca-pub-1234567890123456) が
+           設定されている時だけ読み込む。未設定環境 (ローカル等) では何もしない。 */}
+        {adsenseClient && (
+          // eslint-disable-next-line @next/next/no-sync-scripts
+          <script
+            async
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseClient}`}
+            crossOrigin="anonymous"
+          />
+        )}
+      </head>
       <body>
         <OrganizationSchema />
         <Navbar signedIn={!!user} username={username} />
