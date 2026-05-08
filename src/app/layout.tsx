@@ -37,6 +37,10 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "走ログ",
     images: ["/logo.png"]
+  },
+  verification: {
+    // Google Search Console 所有権確認用 (HTML タグ方式)
+    google: "Dz99t5SKYpipiKmd0HqsirlyE-6fNzA5BBRNLSkXOWg"
   }
 };
 
