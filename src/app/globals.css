@@ -20,6 +20,18 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* iOS Safari は font-size < 16px の input にフォーカスすると自動ズームする。
+   一度ズームすると別ページに遷移してもその拡大率が引き継がれてしまうので、
+   モバイル時のみフォーム要素の最低フォントを 16px に底上げして
+   自動ズーム自体が起きないようにする。デスクトップは元の Tailwind サイズのまま。 */
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
 .lap-time {
   color: #e10600;
 }
