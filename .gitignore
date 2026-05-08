@@ -8,3 +8,10 @@ out
 .DS_Store
 .vercel
 next-env.d.ts
+
+# 事業提案書のバイナリ出力はオフライン管理 (Markdown とビルドスクリプトのみ追跡)
+docs/PROPOSAL.pdf
+docs/PROPOSAL.pptx
+docs/PROPOSAL.pptx.tmp
+docs/~$PROPOSAL.pptx
+docs/走ログ_事業提案書.pdf
