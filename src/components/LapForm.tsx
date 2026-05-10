@@ -567,21 +567,6 @@ export function LapForm({
           ? "更新する"
           : "投稿する"}
       </button>
-      <style jsx>{`
-        .input {
-          width: 100%;
-          background: #ffffff;
-          border: 1px solid #d4d4d8;
-          border-radius: 6px;
-          padding: 8px 10px;
-          color: #18181b;
-        }
-        .input:focus {
-          outline: none;
-          border-color: #e10600;
-          box-shadow: 0 0 0 3px rgba(225, 6, 0, 0.1);
-        }
-      `}</style>
     </form>
   );
 }
@@ -675,21 +660,6 @@ function TirePicker({
           )}
         </div>
       </div>
-      <style jsx>{`
-        .input {
-          width: 100%;
-          background: #ffffff;
-          border: 1px solid #d4d4d8;
-          border-radius: 6px;
-          padding: 8px 10px;
-          color: #18181b;
-        }
-        .input:focus {
-          outline: none;
-          border-color: #e10600;
-          box-shadow: 0 0 0 3px rgba(225, 6, 0, 0.1);
-        }
-      `}</style>
     </div>
   );
 }

@@ -20,6 +20,29 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* フォーム共通スタイル.
+   元は LapForm.tsx などの styled-jsx で定義していたが、
+   styled-jsx は子コンポーネント (Field/Select 等) にスコープが届かず
+   <select> が枠なしで表示される問題があったので、ここに移してグローバル化。 */
+.input {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #d4d4d8;
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: #18181b;
+}
+.input:focus {
+  outline: none;
+  border-color: #e10600;
+  box-shadow: 0 0 0 3px rgba(225, 6, 0, 0.1);
+}
+/* select 専用: ネイティブのドロップダウン矢印は残しつつ、見た目を input と揃える */
+select.input {
+  appearance: auto;
+  cursor: pointer;
+}
+
 /* iOS Safari は font-size < 16px の input にフォーカスすると自動ズームする。
    一度ズームすると別ページに遷移してもその拡大率が引き継がれてしまうので、
    モバイル時のみフォーム要素の最低フォントを 16px に底上げして
