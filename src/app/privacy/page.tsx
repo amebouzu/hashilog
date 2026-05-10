@@ -10,7 +10,7 @@ export default function PrivacyPage() {
   return (
     <LegalLayout
       title="プライバシーポリシー"
-      effectiveDate="2026年5月1日"
+      effectiveDate="2026年5月10日"
     >
       <p>
         走ログ運営事務局 (以下「当方」) は、本サービスにおけるユーザーの個人情報の取扱いについて、以下のとおりプライバシーポリシー (以下「本ポリシー」) を定めます。
@@ -75,7 +75,66 @@ export default function PrivacyPage() {
         <li>PostHog (匿名化された利用統計)</li>
       </ul>
 
-      <h2>7. 安全管理措置</h2>
+      <h2>7. 第三者配信の広告サービス</h2>
+      <p>
+        本サービスは、第三者配信の広告サービス「Google AdSense」を利用しています。Google などの第三者配信事業者は、Cookie および類似技術を使用して、ユーザーが本サービスや他のサイトへアクセスした履歴に基づいて、ユーザーの興味に関連すると思われる広告を表示します。
+      </p>
+      <p>本サービスにおける第三者配信広告について、ユーザーは下記の方法で配信内容を制御できます。</p>
+      <ul>
+        <li>
+          <strong>Google による広告のパーソナライズ:</strong>{" "}
+          <a
+            className="text-racing-red hover:underline"
+            href="https://adssettings.google.com/"
+            target="_blank"
+            rel="noreferrer noopener"
+          >
+            広告設定 (adssettings.google.com)
+          </a>{" "}
+          にアクセスすることで、Google が表示する広告のパーソナライズを無効にできます。
+        </li>
+        <li>
+          <strong>第三者ベンダーの広告全般:</strong>{" "}
+          <a
+            className="text-racing-red hover:underline"
+            href="https://www.aboutads.info/choices/"
+            target="_blank"
+            rel="noreferrer noopener"
+          >
+            aboutads.info/choices
+          </a>{" "}
+          または{" "}
+          <a
+            className="text-racing-red hover:underline"
+            href="https://www.youronlinechoices.com/"
+            target="_blank"
+            rel="noreferrer noopener"
+          >
+            youronlinechoices.com
+          </a>{" "}
+          で第三者ベンダーやアドネットワークが提供するパーソナライズ広告のオプトアウトが可能です。
+        </li>
+        <li>
+          <strong>ブラウザ側での無効化:</strong> ブラウザ設定で Cookie を無効化することで、行動ターゲティング広告を制限できます。
+        </li>
+      </ul>
+      <p>
+        Google による広告 Cookie の使用に関する詳細は、{" "}
+        <a
+          className="text-racing-red hover:underline"
+          href="https://policies.google.com/technologies/ads"
+          target="_blank"
+          rel="noreferrer noopener"
+        >
+          Google ポリシーと規約 (広告)
+        </a>{" "}
+        をご確認ください。
+      </p>
+      <p>
+        EU・英国・スイス等の地域からアクセスされたユーザーには、適用される法令に従い同意取得用のメッセージを表示することがあります (Google 認定 CMP「Funding Choices」を利用)。
+      </p>
+
+      <h2>8. 安全管理措置</h2>
       <p>当方は、個人情報の漏えい、滅失または毀損の防止その他個人情報の安全管理のために、合理的かつ適切な措置を講じます。</p>
       <ul>
         <li>パスワードはハッシュ化して保存</li>
@@ -84,7 +143,7 @@ export default function PrivacyPage() {
         <li>従業員・委託先への教育・監督</li>
       </ul>
 
-      <h2>8. 開示・訂正・削除請求</h2>
+      <h2>9. 開示・訂正・削除請求</h2>
       <p>ユーザーは、当方が保有する自己の個人情報について、以下の請求を行うことができます。</p>
       <ul>
         <li><strong>開示:</strong> 設定画面からダウンロード可能 (将来実装予定)</li>
@@ -94,13 +153,13 @@ export default function PrivacyPage() {
       </ul>
       <p>退会後は、登録情報および投稿コンテンツを当方は速やかに削除します。ただし、法令に基づく保存義務がある情報および集計済みの匿名統計データは除きます。</p>
 
-      <h2>9. 未成年者の利用</h2>
+      <h2>10. 未成年者の利用</h2>
       <p>未成年者が本サービスを利用する場合は、保護者の同意を得た上で行ってください。</p>
 
-      <h2>10. ポリシーの変更</h2>
+      <h2>11. ポリシーの変更</h2>
       <p>当方は、必要に応じて本ポリシーを変更することがあります。重要な変更がある場合は、本サービス上で告知します。</p>
 
-      <h2>11. お問い合わせ窓口</h2>
+      <h2>12. お問い合わせ窓口</h2>
       <p>個人情報の取扱いに関するお問い合わせは、本サービスの<a className="text-racing-red hover:underline" href="/contact">お問い合わせフォーム</a>または下記までご連絡ください。</p>
       <p>
         走ログ運営事務局<br />
