@@ -70,68 +70,41 @@ def text_height(draw: ImageDraw.ImageDraw, text: str, font) -> int:
 
 
 def build():
-    # キャンバス
-    img = Image.new("RGB", (W, H), OFFWHITE[:3])
+    """ロゴ中心のミニマルな OG 画像を生成する。
+    元々はキャッチコピー入りのバナー風だったが、ユーザー要望により
+    「ロゴだけが目立つ」シンプルなデザインに変更。
+    """
+    # キャンバス (白背景)
+    img = Image.new("RGB", (W, H), (255, 255, 255))
     draw = ImageDraw.Draw(img, "RGBA")
 
-    # 左端の縦の赤アクセント帯
-    draw.rectangle([0, 0, 64, H], fill=RED)
+    # 上下のごく薄い赤アクセント (12px ずつ)
+    draw.rectangle([0, 0, W, 12], fill=RED)
+    draw.rectangle([0, H - 12, W, H], fill=RED)
 
-    # 微妙な右側のグラデ風アクセント (繰返し赤の薄ライン)
-    for i in range(0, 30):
-        alpha = int(8 - i * 0.25)  # 徐々に薄く
-        if alpha <= 0:
-            break
-        x = W - 60 + i * 2
-        draw.line([(x, 0), (x, H)], fill=(225, 6, 0, alpha), width=1)
-
-    # 右上の小さな赤角アクセント
-    draw.rectangle([W - 200, 60, W - 180, 80], fill=RED)
-    en_label_font = load_font(EN_FONT_CANDIDATES, 22)
-    draw.text(
-        (W - 170, 56),
-        "BUSINESS PROPOSAL".replace("BUSINESS PROPOSAL", "RACING TIME LOG"),
-        font=en_label_font,
-        fill=RED,
-    )
-
-    # ロゴ (左寄せ・中央高さ)
+    # ロゴを中央配置 (高さの 55% を占める大判表示)
     if LOGO_PATH.exists():
         logo = Image.open(LOGO_PATH).convert("RGBA")
-        logo_h = 200
-        logo_w = int(logo.width * (logo_h / logo.height))
-        logo = logo.resize((logo_w, logo_h), Image.LANCZOS)
-        # 配置: 左から 130px、上から 90px
-        img.paste(logo, (130, 90), logo)
+        target_h = int(H * 0.55)  # 約 346px
+        target_w = int(logo.width * (target_h / logo.height))
+        logo = logo.resize((target_w, target_h), Image.LANCZOS)
+        x = (W - target_w) // 2
+        # 中央より少し上寄せ (下に URL を入れるスペースを確保)
+        y = int(H * 0.18)
+        img.paste(logo, (x, y), logo)
 
-    # タイトル「走ログ」 (大判)
-    title_font = load_font(JP_FONT_CANDIDATES, 130)
-    draw.text((130, 320), "走ログ", font=title_font, fill=INK)
-
-    # サブタイトル「Hashilog」(英字)
-    sub_font = load_font(EN_FONT_CANDIDATES, 56)
-    title_w = text_width(draw, "走ログ", title_font)
-    draw.text((130 + title_w + 30, 380), "Hashilog", font=sub_font, fill=GRAY_500)
-
-    # 細い赤アンダーライン
-    draw.rectangle([130, 482, 230, 488], fill=RED)
-
-    # タグライン
-    tag_font = load_font(JP_FONT_CANDIDATES, 32)
-    draw.text(
-        (130, 506),
-        "サーキットタイムを、愛車情報と一緒にシェア。",
-        font=tag_font,
-        fill=GRAY_700,
-    )
-
-    # 右下: hashilog.jp
-    url_font = load_font(EN_FONT_CANDIDATES, 26)
+    # ロゴの下: hashilog.jp (落ち着いた灰色)
+    url_font = load_font(EN_FONT_CANDIDATES, 36)
     url_text = "hashilog.jp"
     url_w = text_width(draw, url_text, url_font)
-    draw.text((W - url_w - 60, H - 60), url_text, font=url_font, fill=GRAY_500)
+    draw.text(
+        ((W - url_w) // 2, int(H * 0.78)),
+        url_text,
+        font=url_font,
+        fill=GRAY_500,
+    )
 
-    # 保存 (PNG) — RGBA → RGB に統合済み
+    # 保存 (PNG)
     img.save(OUT_PATH, "PNG", optimize=True)
     print(f"Wrote {OUT_PATH} ({OUT_PATH.stat().st_size // 1024} KB)")
 
