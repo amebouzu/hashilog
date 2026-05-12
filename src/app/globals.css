@@ -67,37 +67,44 @@ select.input {
 }
 
 /* ===== Latest lap slider ===== */
-.lap-slider {
-  overflow: hidden;
+/* JS 駆動の自動スクロールトラック (auto-flow + 手動スクロール 両対応).
+   コンテナ自体を overflow-x: auto にして、JS で scrollLeft を進めることで
+   ユーザーの操作 (タッチ・スワイプ・トラックパッド・スクロールホイール) も
+   同じ scrollLeft に反映される。 */
+.lap-slider-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none; /* Firefox: スクロールバーを隠す */
+  -ms-overflow-style: none; /* IE/Edge legacy */
+  /* 左右のグラデーションフェード (両端が自然に消える) */
   mask-image: linear-gradient(90deg, transparent 0, #000 32px, #000 calc(100% - 32px), transparent 100%);
   -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 32px, #000 calc(100% - 32px), transparent 100%);
+  scroll-behavior: auto; /* JS 制御中は smooth scroll しない (ガクつき防止) */
 }
-/* 静止モード (件数が少ない時): 横スクロールを許可。マスクは外して右端も読みやすく */
+.lap-slider-scroll::-webkit-scrollbar {
+  display: none; /* WebKit でスクロールバーを隠す */
+}
+.lap-slider-row {
+  display: flex;
+  gap: 12px;
+  width: max-content;
+}
+
+/* 件数が少ない時はそのまま横並びの静止表示 (はみ出したら手動横スクロール) */
+.lap-slider {
+  overflow: hidden;
+}
 .lap-slider.lap-slider--static {
   overflow-x: auto;
   overflow-y: hidden;
   mask-image: none;
   -webkit-mask-image: none;
 }
-.lap-slider-track {
-  display: flex;
-  gap: 12px;
-  width: max-content;
-  animation: lap-slide 28s linear infinite;
-}
-.lap-slider:hover .lap-slider-track {
-  animation-play-state: paused;
-}
-/* 件数が少ない時はマーキー無し、横一列の静止表示 (はみ出したら横スクロール) */
 .lap-slider-static {
   display: flex;
   gap: 12px;
   flex-wrap: nowrap;
   width: max-content;
-}
-@keyframes lap-slide {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
 }
 .lap-slide-card {
   flex: 0 0 240px;
