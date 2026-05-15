@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { LapSlider } from "@/components/LapSlider";
 import { LapRow, LapTableHeader } from "@/components/LapRow";
+import { RankingFilters } from "@/components/RankingFilters";
 import { prefectureOrder } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -154,19 +154,13 @@ export default async function RankingPage({
     return true;
   });
 
-  // Build dropdown options
-  const makers = uniq((makerRows ?? []).map((r) => r.maker)).sort();
-  const models = uniq(
-    (makerRows ?? [])
-      .filter((r) => !searchParams.maker || r.maker === searchParams.maker)
-      .map((r) => r.model)
-  ).sort();
-  const brands = uniq((tireRows ?? []).map((r) => r.brand)).sort();
-  const tireModels = uniq(
-    (tireRows ?? [])
-      .filter((r) => !searchParams.brand || r.brand === searchParams.brand)
-      .map((r) => r.model)
-  ).sort();
+  // サーキットは都道府県順 (北→南) で並べる
+  const sortedCircuits = (circuits ?? []).slice().sort((a, b) => {
+    const oa = prefectureOrder(a.prefecture);
+    const ob = prefectureOrder(b.prefecture);
+    if (oa !== ob) return oa - ob;
+    return a.name.localeCompare(b.name, "ja");
+  });
 
   return (
     <div className="space-y-6">
@@ -174,118 +168,29 @@ export default async function RankingPage({
 
       <LapSlider laps={(latestLaps ?? []) as any} />
 
-      {/* ===== Filters ===== */}
-      <section>
-        <div className="mb-2 flex items-end justify-between">
-          <h2 className="text-sm font-semibold text-zinc-700">
-            条件で絞り込む
-          </h2>
-          <Link
-            href="/ranking"
-            className="text-xs text-racing-red hover:underline"
-          >
-            すべて解除
-          </Link>
-        </div>
-        <form
-          method="get"
-          className="rounded-lg border border-zinc-200 bg-white p-4"
-        >
-          {/* ユーザー検索 (フリーテキスト) */}
-          <label className="block">
-            <span className="mb-1 block text-xs text-zinc-500">
-              ユーザー検索 (ユーザー名 / 表示名 部分一致)
-            </span>
-            <input
-              type="text"
-              name="user"
-              defaultValue={searchParams.user ?? ""}
-              placeholder="例: 山田, tanaka"
-              className="w-full rounded border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-racing-red focus:outline-none focus:ring-2 focus:ring-red-100"
-            />
-          </label>
-          {userQuery && userIds && (
-            <p className="mt-1 text-xs text-zinc-500">
-              {userIds.length === 0
-                ? `「${userQuery}」に一致するユーザーは見つかりませんでした`
-                : `「${userQuery}」 にマッチした ${userIds.length} 名のラップを表示`}
-            </p>
-          )}
+      {/* ===== Filters (client component で連動絞込) ===== */}
+      <RankingFilters
+        initial={{
+          user: searchParams.user,
+          circuit: searchParams.circuit,
+          maker: searchParams.maker,
+          model: searchParams.model,
+          brand: searchParams.brand,
+          tire: searchParams.tire
+        }}
+        circuits={sortedCircuits}
+        cars={(makerRows ?? []) as { maker: string; model: string }[]}
+        tires={(tireRows ?? []) as { brand: string; model: string }[]}
+        resultCount={filtered.length}
+      />
 
-          {/* 既存の絞り込みドロップダウン群 */}
-          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          <FilterSelect
-            name="circuit"
-            label="サーキット"
-            value={searchParams.circuit ?? ""}
-            options={[
-              { value: "", label: "すべて" },
-              // 都道府県順 (北→南) で並べ、同県内は名前順
-              ...((circuits ?? [])
-                .slice()
-                .sort((a, b) => {
-                  const oa = prefectureOrder(a.prefecture);
-                  const ob = prefectureOrder(b.prefecture);
-                  if (oa !== ob) return oa - ob;
-                  return a.name.localeCompare(b.name, "ja");
-                })
-                .map((c) => ({ value: c.slug, label: c.name })))
-            ]}
-          />
-          <FilterSelect
-            name="maker"
-            label="メーカー"
-            value={searchParams.maker ?? ""}
-            options={[
-              { value: "", label: "すべて" },
-              ...makers.map((m) => ({ value: m, label: m }))
-            ]}
-          />
-          <FilterSelect
-            name="model"
-            label="車種"
-            value={searchParams.model ?? ""}
-            options={[
-              { value: "", label: "すべて" },
-              ...models.map((m) => ({ value: m, label: m }))
-            ]}
-          />
-          <FilterSelect
-            name="brand"
-            label="タイヤブランド"
-            value={searchParams.brand ?? ""}
-            options={[
-              { value: "", label: "すべて" },
-              ...brands.map((b) => ({ value: b, label: b }))
-            ]}
-          />
-          <FilterSelect
-            name="tire"
-            label="タイヤ銘柄"
-            value={searchParams.tire ?? ""}
-            options={[
-              { value: "", label: "すべて" },
-              ...tireModels.map((m) => ({ value: m, label: m }))
-            ]}
-          />
-          </div>
-
-          <div className="mt-4 flex gap-2">
-            <button
-              type="submit"
-              className="rounded bg-racing-red px-4 py-1.5 text-sm font-bold text-white hover:bg-red-700"
-            >
-              この条件で検索
-            </button>
-            <Link
-              href="/ranking"
-              className="rounded border border-zinc-300 px-4 py-1.5 text-sm text-zinc-700 hover:bg-zinc-50"
-            >
-              リセット
-            </Link>
-          </div>
-        </form>
-      </section>
+      {userQuery && userIds && (
+        <p className="text-xs text-zinc-500">
+          {userIds.length === 0
+            ? `「${userQuery}」に一致するユーザーは見つかりませんでした`
+            : `「${userQuery}」 にマッチした ${userIds.length} 名のラップを表示`}
+        </p>
+      )}
 
       <p className="text-sm text-zinc-500">
         {filtered.length === 0
@@ -308,38 +213,5 @@ export default async function RankingPage({
         </p>
       )}
     </div>
-  );
-}
-
-function uniq<T>(arr: T[]): T[] {
-  return Array.from(new Set(arr));
-}
-
-function FilterSelect({
-  name,
-  label,
-  value,
-  options
-}: {
-  name: string;
-  label: string;
-  value: string;
-  options: { value: string; label: string }[];
-}) {
-  return (
-    <label className="block">
-      <span className="mb-1 block text-xs text-zinc-500">{label}</span>
-      <select
-        name={name}
-        defaultValue={value}
-        className="w-full rounded border border-zinc-300 bg-white px-2 py-2 text-sm text-zinc-900 focus:border-racing-red focus:outline-none focus:ring-2 focus:ring-red-100"
-      >
-        {options.map((o) => (
-          <option key={`${o.value}-${o.label}`} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-    </label>
   );
 }
