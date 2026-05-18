@@ -6,10 +6,13 @@ const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const supabase = createClient();
 
-  // 静的ページ
+  // 静的ページ (独自コンテンツの編集ページを含む)
   const staticEntries: MetadataRoute.Sitemap = [
     "",
     "/about",
+    "/help",
+    "/guide/intro",
+    "/guide/tires",
     "/ranking",
     "/circuits",
     "/contact",
@@ -22,7 +25,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     url: `${SITE}${path}`,
     lastModified: new Date(),
     changeFrequency: "weekly",
-    priority: path === "" ? 1.0 : 0.7
+    priority:
+      path === ""
+        ? 1.0
+        : path.startsWith("/guide") || path === "/help"
+        ? 0.9  // 編集記事 = SEO ターゲット
+        : 0.7
   }));
 
   // サーキットページ (公開中のみ)

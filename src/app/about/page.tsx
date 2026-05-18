@@ -175,6 +175,55 @@ export default function AboutPage() {
         </div>
       </section>
 
+      <section>
+        <div className="mb-6 text-center">
+          <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500">
+            GUIDE
+          </p>
+          <h2 className="mt-1 text-2xl font-bold text-zinc-900">
+            これから始める方へ
+          </h2>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Link
+            href="/guide/intro"
+            className="rounded-xl border border-zinc-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-racing-red"
+          >
+            <h3 className="font-bold text-zinc-900">サーキット走行 入門</h3>
+            <p className="mt-2 text-sm text-zinc-600">
+              スポーツ走行と走行会の違い、参加準備、当日の流れ、初心者がやりがちな失敗、上達のコツまで。
+            </p>
+            <p className="mt-3 text-xs font-semibold text-racing-red">
+              ガイドを読む →
+            </p>
+          </Link>
+          <Link
+            href="/guide/tires"
+            className="rounded-xl border border-zinc-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-racing-red"
+          >
+            <h3 className="font-bold text-zinc-900">タイヤ選びガイド</h3>
+            <p className="mt-2 text-sm text-zinc-600">
+              ストリートラジアル / ハイグリップ / セミスリック / Sタイヤの違いと、レベル別おすすめ銘柄。
+            </p>
+            <p className="mt-3 text-xs font-semibold text-racing-red">
+              ガイドを読む →
+            </p>
+          </Link>
+          <Link
+            href="/help"
+            className="rounded-xl border border-zinc-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-racing-red"
+          >
+            <h3 className="font-bold text-zinc-900">よくある質問 (FAQ)</h3>
+            <p className="mt-2 text-sm text-zinc-600">
+              走ログの使い方、タイム投稿、愛車登録、ランキング、トラブル対応など 25 問。
+            </p>
+            <p className="mt-3 text-xs font-semibold text-racing-red">
+              FAQ を見る →
+            </p>
+          </Link>
+        </div>
+      </section>
+
       <section className="hero rounded-xl p-5 text-center sm:p-8">
         <h2 className="text-2xl font-bold text-zinc-900">
           あなたの走りを、データに残そう

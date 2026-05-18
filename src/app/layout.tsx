@@ -100,6 +100,21 @@ export default async function RootLayout({
               <a href="/about" className="text-zinc-600 hover:text-zinc-900">
                 走ログとは
               </a>
+              <a href="/help" className="text-zinc-600 hover:text-zinc-900">
+                よくある質問
+              </a>
+              <a
+                href="/guide/intro"
+                className="text-zinc-600 hover:text-zinc-900"
+              >
+                サーキット入門
+              </a>
+              <a
+                href="/guide/tires"
+                className="text-zinc-600 hover:text-zinc-900"
+              >
+                タイヤ選び
+              </a>
               <a href="/contact" className="text-zinc-600 hover:text-zinc-900">
                 お問い合わせ
               </a>
