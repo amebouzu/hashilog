@@ -80,7 +80,8 @@ export async function updateCarAction(carId: string, formData: FormData) {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const payload = {
+  // 基本フィールド
+  const payload: Record<string, unknown> = {
     name: (formData.get("name") ?? "").toString().trim(),
     maker: (formData.get("maker") ?? "").toString().trim(),
     model: (formData.get("model") ?? "").toString().trim(),
@@ -97,6 +98,13 @@ export async function updateCarAction(carId: string, formData: FormData) {
     weight_kg: intOrNull(formData.get("weight_kg"))
   };
 
+  // 新規カバー画像がアップロードされていれば cover_url を更新。
+  // 未アップロード (フォームに cover_url キーが無い) の場合は触らない。
+  const newCoverUrl = strOrNull(formData.get("cover_url"));
+  if (newCoverUrl) {
+    payload.cover_url = newCoverUrl;
+  }
+
   const { error } = await supabase
     .from("cars")
     .update(payload)
@@ -104,7 +112,32 @@ export async function updateCarAction(carId: string, formData: FormData) {
     .eq("user_id", user.id);
   if (error) throw error;
 
+  // 新規ギャラリー写真があれば car_photos に追加 (既存写真は残す)。
+  const galleryPaths = (formData.get("gallery_paths") ?? "")
+    .toString()
+    .split("\n")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (galleryPaths.length > 0) {
+    // 既存の最大 position を取得して、その後ろに連番で追加する
+    const { data: existing } = await supabase
+      .from("car_photos")
+      .select("position")
+      .eq("car_id", carId)
+      .order("position", { ascending: false })
+      .limit(1);
+    const startPos = ((existing?.[0]?.position as number | undefined) ?? -1) + 1;
+    await supabase.from("car_photos").insert(
+      galleryPaths.map((p, i) => ({
+        car_id: carId,
+        storage_path: p,
+        position: startPos + i
+      }))
+    );
+  }
+
   revalidatePath(`/cars/${carId}`);
+  revalidatePath("/cars");
   redirect(`/cars/${carId}`);
 }
 

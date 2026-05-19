@@ -99,7 +99,13 @@ export default async function CarDetailPage({
               </p>
             )}
             {isOwner && (
-              <div className="mt-4 flex gap-2">
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Link
+                  href={`/cars/${c.id}/edit`}
+                  className="rounded border border-zinc-300 px-3 py-1 text-xs text-zinc-700 hover:bg-zinc-50"
+                >
+                  編集
+                </Link>
                 <form
                   action={async () => {
                     "use server";
