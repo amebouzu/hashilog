@@ -1,11 +1,16 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { createClient } from "@/lib/supabase/server";
+import { LapSlider } from "@/components/LapSlider";
+import { AdSenseSlot } from "@/components/AdSenseSlot";
 
 export const metadata: Metadata = {
   title: "走ログ — サーキットタイム共有",
   description:
     "愛車のスペックも改造内容も、走った日の天候も。あなたのベストラップを一つのページに。"
 };
+
+export const dynamic = "force-dynamic";
 
 const features = [
   {
@@ -40,7 +45,23 @@ const steps = [
   }
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const supabase = createClient();
+
+  // 最新タイム投稿 (トップのスライダー用)
+  const { data: latestLaps } = await supabase
+    .from("lap_times")
+    .select(
+      `id, total_ms, driven_at,
+       profiles(username),
+       cars(maker, model),
+       circuits(name)`
+    )
+    .order("created_at", { ascending: false })
+    .limit(8);
+
+  const adSlotHome = process.env.NEXT_PUBLIC_ADSENSE_SLOT_HOME;
+
   return (
     <div className="space-y-12">
       <section className="hero rounded-xl p-5 sm:p-12">
@@ -70,6 +91,29 @@ export default function HomePage() {
           </Link>
         </div>
       </section>
+
+      {/* 最新タイム投稿 (データがある時のみ表示) */}
+      {latestLaps && latestLaps.length > 0 && (
+        <section>
+          <div className="mb-4 flex items-end justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500">
+                LATEST LAPS
+              </p>
+              <h2 className="mt-1 text-2xl font-bold text-zinc-900">
+                最新のタイム投稿
+              </h2>
+            </div>
+            <Link
+              href="/ranking"
+              className="text-sm text-racing-red hover:underline"
+            >
+              ランキングを見る →
+            </Link>
+          </div>
+          <LapSlider laps={latestLaps as any} />
+        </section>
+      )}
 
       <section>
         <div className="mb-6 text-center">
@@ -120,6 +164,53 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* AdSense 広告枠 (環境変数 NEXT_PUBLIC_ADSENSE_SLOT_HOME 設定時のみ表示) */}
+      {adSlotHome && (
+        <section aria-label="広告">
+          <AdSenseSlot slot={adSlotHome} />
+        </section>
+      )}
+
+      {/* サーキット運営者・メーカー向け B2B 導線 */}
+      <section className="overflow-hidden rounded-xl border border-zinc-200">
+        <div className="grid sm:grid-cols-2">
+          <div className="bg-zinc-900 p-6 sm:p-8">
+            <p className="text-xs font-semibold uppercase tracking-widest text-red-400">
+              FOR CIRCUIT OPERATORS
+            </p>
+            <h3 className="mt-2 text-xl font-bold text-white">
+              サーキット運営者の方へ
+            </h3>
+            <p className="mt-3 text-sm leading-relaxed text-zinc-300">
+              公式アカウントを無料で発行しています。自施設ページの編集、走行会・レース・お知らせの告知、来場ドライバーのタイム集計が可能です。
+            </p>
+            <Link
+              href="/contact?category=partnership"
+              className="mt-4 inline-block rounded bg-white px-4 py-2 text-sm font-bold text-zinc-900 hover:bg-zinc-100"
+            >
+              提携について相談する
+            </Link>
+          </div>
+          <div className="bg-racing-red p-6 sm:p-8">
+            <p className="text-xs font-semibold uppercase tracking-widest text-red-200">
+              FOR MANUFACTURERS
+            </p>
+            <h3 className="mt-2 text-xl font-bold text-white">
+              タイヤ・パーツメーカーの方へ
+            </h3>
+            <p className="mt-3 text-sm leading-relaxed text-red-100">
+              「銘柄 × サーキット × 車両 × タイム」の実走行データが集まります。使用実績レポート、公式バッジ、新製品連動企画などをご提案できます。
+            </p>
+            <Link
+              href="/contact?category=sponsor"
+              className="mt-4 inline-block rounded bg-white px-4 py-2 text-sm font-bold text-racing-red hover:bg-red-50"
+            >
+              協業について相談する
+            </Link>
+          </div>
+        </div>
+      </section>
+
       <section className="hero rounded-xl p-5 text-center sm:p-8">
         <h2 className="text-2xl font-bold text-zinc-900">
           次のアタック、記録してみませんか?
@@ -145,4 +236,3 @@ export default function HomePage() {
     </div>
   );
 }
-
