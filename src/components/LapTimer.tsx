@@ -10,6 +10,7 @@ import {
 } from "@/lib/laptiming";
 import { perpendicularLine, type GpsSample } from "@/lib/geo";
 import { getCircuitTiming } from "@/lib/circuit-timing";
+import { nearestCircuitSlug } from "@/lib/circuit-locations";
 
 type CarOpt = { id: string; name: string; maker: string; model: string };
 type CircuitOpt = { id: string; slug: string; name: string; sectors: number };
@@ -48,6 +49,8 @@ export function LapTimer({
   const [speedKmh, setSpeedKmh] = useState<number | null>(null);
   const [accuracy, setAccuracy] = useState<number | null>(null);
   const [lineSet, setLineSet] = useState(false);
+  // GPS によるサーキット自動検出の結果メッセージ
+  const [autoDetected, setAutoDetected] = useState<string | null>(null);
   const [laps, setLaps] = useState<RecordedLap[]>([]);
   const [liveLapMs, setLiveLapMs] = useState(0);
   const [savingLap, setSavingLap] = useState<number | null>(null);
@@ -61,6 +64,10 @@ export function LapTimer({
   const prevSampleRef = useRef<GpsSample | null>(null);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const accSumRef = useRef<{ sum: number; n: number }>({ sum: 0, n: 0 });
+  // サーキット自動検出を1セッション1回だけ行うフラグ
+  const autoCheckedRef = useRef(false);
+  // ユーザーが手動でサーキットを選んだら自動検出で上書きしない
+  const userPickedRef = useRef(false);
 
   const selectedCircuit = circuits.find((c) => c.id === circuitId);
 
@@ -125,6 +132,29 @@ export function LapTimer({
     );
     setAccuracy(pos.coords.accuracy ?? null);
 
+    // --- サーキット自動検出 (最初の1回・手動選択がなければ) ---
+    if (!autoCheckedRef.current && !userPickedRef.current) {
+      autoCheckedRef.current = true;
+      const near = nearestCircuitSlug(
+        pos.coords.latitude,
+        pos.coords.longitude,
+        10
+      );
+      if (near) {
+        const match = circuits.find((c) => c.slug === near.slug);
+        if (match) {
+          setCircuitId(match.id);
+          setAutoDetected(
+            `📍 ${match.name} を検出しました (約${near.distanceKm.toFixed(1)}km)`
+          );
+        }
+      } else {
+        setAutoDetected(
+          "現在地から近いサーキットが見つかりませんでした。手動で選択してください。"
+        );
+      }
+    }
+
     // 軌跡を記録
     traceRef.current.push(sample);
     if (pos.coords.accuracy != null) {
@@ -188,6 +218,8 @@ export function LapTimer({
     traceRef.current = [];
     prevSampleRef.current = null;
     accSumRef.current = { sum: 0, n: 0 };
+    autoCheckedRef.current = false; // セッションごとに自動検出を再実行
+    setAutoDetected(null);
     setLaps([]);
     setSavedLaps(new Set());
 
@@ -349,9 +381,11 @@ export function LapTimer({
             <span className="mb-1 block text-xs text-zinc-600">サーキット</span>
             <select
               value={circuitId}
-              onChange={(e) => setCircuitId(e.target.value)}
-              disabled={status !== "idle"}
-              className="w-full rounded border border-zinc-300 bg-white px-2 py-2 text-sm disabled:bg-zinc-100"
+              onChange={(e) => {
+                userPickedRef.current = true;
+                setCircuitId(e.target.value);
+              }}
+              className="w-full rounded border border-zinc-300 bg-white px-2 py-2 text-sm"
             >
               {circuits.map((c) => (
                 <option key={c.id} value={c.id}>
@@ -376,6 +410,16 @@ export function LapTimer({
           </label>
         </div>
       </section>
+
+      {/* サーキット自動検出メッセージ */}
+      {autoDetected && (
+        <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
+          {autoDetected}
+          <span className="mt-1 block text-xs text-emerald-700">
+            違う場合は上のドロップダウンで変更できます。
+          </span>
+        </p>
+      )}
 
       {/* GPS ステータス */}
       {status !== "idle" && (

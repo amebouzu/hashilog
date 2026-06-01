@@ -8,7 +8,9 @@ import { prefectureOrder } from "@/lib/types";
 export const metadata: Metadata = {
   title: "走ログロガー (GPS計測)",
   description:
-    "スマートフォンの GPS でサーキットのラップタイムを計測し、そのまま走ログに投稿できる GPS ラップタイマー (ベータ)。"
+    "スマートフォンの GPS でサーキットのラップタイムを計測し、そのまま走ログに投稿できる GPS ラップタイマー (ベータ)。",
+  // 非公開ベータのため検索エンジンに載せない
+  robots: { index: false, follow: false }
 };
 
 export const dynamic = "force-dynamic";
@@ -19,6 +21,15 @@ export default async function LapTimerPage() {
     data: { user }
   } = await supabase.auth.getUser();
   if (!user) redirect("/login?next=/laptimer");
+
+  // ベータ機能のため非公開: 管理者 (profiles.is_admin) のみアクセス可。
+  // 一般ユーザーがURL直打ちで来てもトップへ戻す。
+  const { data: prof } = await supabase
+    .from("profiles")
+    .select("is_admin")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (!prof?.is_admin) redirect("/");
 
   const [{ data: cars }, { data: circuits }] = await Promise.all([
     supabase
