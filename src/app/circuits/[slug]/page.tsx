@@ -8,6 +8,7 @@ import {
   type CircuitEvent
 } from "@/lib/types";
 import { getCircuitDetail } from "@/lib/circuit-details";
+import { getCircuitGuide } from "@/lib/circuit-guides";
 import { LapRow, LapTableHeader } from "@/components/LapRow";
 
 export const dynamic = "force-dynamic";
@@ -27,6 +28,7 @@ export default async function CircuitDetailPage({
 
   const c = circuit as Circuit;
   const detail = getCircuitDetail(c.slug);
+  const guide = getCircuitGuide(c.slug);
 
   const [{ data: laps }, { data: events }, { data: { user } }] = await Promise.all([
     // tires への自動 join は FK が3本になってから PostgREST が曖昧として
@@ -169,6 +171,40 @@ export default async function CircuitDetailPage({
           <p className="whitespace-pre-wrap leading-relaxed text-zinc-800">
             {detail.description}
           </p>
+        </section>
+      )}
+
+      {/* ===== 攻略ガイド (走ログ独自の編集コンテンツ) ===== */}
+      {guide && guide.length > 0 && (
+        <section className="rounded-xl border border-zinc-200 bg-white p-6">
+          <h2 className="mb-1 text-lg font-bold text-zinc-900">
+            {c.name} 攻略のポイント
+          </h2>
+          <p className="mb-4 text-xs text-zinc-500">
+            走り方・コース特性・セッティングの傾向を解説します (参考情報)。
+          </p>
+          <div className="space-y-4 leading-relaxed text-zinc-800">
+            {guide.map((para, i) => (
+              <p key={i} className="text-sm sm:text-[15px]">
+                {para}
+              </p>
+            ))}
+          </div>
+          <div className="mt-5 flex flex-wrap gap-2 border-t border-zinc-100 pt-4 text-sm">
+            <Link
+              href="/guide/intro"
+              className="text-racing-red hover:underline"
+            >
+              サーキット走行 入門ガイド →
+            </Link>
+            <span className="text-zinc-300">|</span>
+            <Link
+              href="/guide/tires"
+              className="text-racing-red hover:underline"
+            >
+              タイヤ選びガイド →
+            </Link>
+          </div>
         </section>
       )}
 
