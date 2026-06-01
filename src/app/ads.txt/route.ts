@@ -12,12 +12,14 @@
  * 末尾の f08c47fec0942fa0 は Google AdSense 固定の認証局 (TAG) ID。
  */
 
+import { getAdsensePubId } from "@/lib/adsense";
+
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const client = process.env.NEXT_PUBLIC_ADSENSE_CLIENT?.trim();
+  const pub = getAdsensePubId();
 
-  if (!client) {
+  if (!pub) {
     // ID 未設定時は空の (コメントのみ) ads.txt を返す
     return new Response(
       "# ads.txt — NEXT_PUBLIC_ADSENSE_CLIENT is not set yet\n",
@@ -27,9 +29,6 @@ export async function GET() {
       }
     );
   }
-
-  // "ca-pub-1234..." -> "pub-1234..."
-  const pub = client.replace(/^ca-/, "");
 
   const body = `google.com, ${pub}, DIRECT, f08c47fec0942fa0\n`;
 

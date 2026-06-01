@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { getAdsenseClient } from "@/lib/adsense";
 
 declare global {
   interface Window {
@@ -36,7 +37,7 @@ export function AdSenseSlot({
   style?: React.CSSProperties;
   className?: string;
 }) {
-  const client = process.env.NEXT_PUBLIC_ADSENSE_CLIENT;
+  const client = getAdsenseClient();
 
   useEffect(() => {
     if (!client) return;

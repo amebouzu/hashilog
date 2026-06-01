@@ -3,6 +3,7 @@ import "./globals.css";
 import { Navbar } from "@/components/Navbar";
 import { OrganizationSchema } from "@/components/StructuredData";
 import { createClient } from "@/lib/supabase/server";
+import { getAdsenseClient } from "@/lib/adsense";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
@@ -73,7 +74,7 @@ export default async function RootLayout({
   }
 
   const cfBeacon = process.env.NEXT_PUBLIC_CLOUDFLARE_BEACON_TOKEN;
-  const adsenseClient = process.env.NEXT_PUBLIC_ADSENSE_CLIENT;
+  const adsenseClient = getAdsenseClient();
 
   return (
     <html lang="ja">
