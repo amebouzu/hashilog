@@ -36,8 +36,8 @@ export async function GET() {
     status: 200,
     headers: {
       "content-type": "text/plain; charset=utf-8",
-      // ads.txt はあまり変わらないので 1 時間キャッシュ
-      "cache-control": "public, max-age=3600"
+      // 短めのキャッシュ (設定変更が早く反映されるように)
+      "cache-control": "public, max-age=300"
     }
   });
 }
