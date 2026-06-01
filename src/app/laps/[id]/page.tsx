@@ -120,6 +120,14 @@ export default async function LapDetailPage({
         <p className="mt-2 font-mono text-5xl font-black lap-time tabular">
           {formatLapMs(lap.total_ms)}
         </p>
+        {lap.source === "gps" && (
+          <p className="mt-2">
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700">
+              📡 GPS計測
+              {lap.gps_verified && " · 検証済み"}
+            </span>
+          </p>
+        )}
         <p className="mt-3 text-sm text-zinc-700">
           <Link
             href={`/u/${lap.profiles.username}`}

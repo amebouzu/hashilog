@@ -13,6 +13,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/circuits", label: "サーキット", icon: "🛣" },
   { href: "/cars", label: "マイガレージ", icon: "🏎", auth: true },
   { href: "/laps/new", label: "タイム投稿", icon: "⏱", auth: true },
+  { href: "/laptimer", label: "GPSロガー", icon: "📡", auth: true },
   { href: "/about", label: "走ログとは", icon: "ℹ" },
   { href: "/contact", label: "お問い合わせ", icon: "✉" }
 ];
